@@ -10,33 +10,63 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as CaptureRouteImport } from './routes/capture'
+import { Route as RemindersRouteImport } from './routes/reminders'
+import { Route as PeoplePersonIdRouteImport } from './routes/people.$personId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CaptureRoute = CaptureRouteImport.update({
+  id: '/capture',
+  path: '/capture',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RemindersRoute = RemindersRouteImport.update({
+  id: '/reminders',
+  path: '/reminders',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PeoplePersonIdRoute = PeoplePersonIdRouteImport.update({
+  id: '/people/$personId',
+  path: '/people/$personId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/capture': typeof CaptureRoute
+  '/reminders': typeof RemindersRoute
+  '/people/$personId': typeof PeoplePersonIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/capture': typeof CaptureRoute
+  '/reminders': typeof RemindersRoute
+  '/people/$personId': typeof PeoplePersonIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/capture': typeof CaptureRoute
+  '/reminders': typeof RemindersRoute
+  '/people/$personId': typeof PeoplePersonIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/capture' | '/reminders' | '/people/$personId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/capture' | '/reminders' | '/people/$personId'
+  id: '__root__' | '/' | '/capture' | '/reminders' | '/people/$personId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CaptureRoute: typeof CaptureRoute
+  RemindersRoute: typeof RemindersRoute
+  PeoplePersonIdRoute: typeof PeoplePersonIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +78,35 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/capture': {
+      id: '/capture'
+      path: '/capture'
+      fullPath: '/capture'
+      preLoaderRoute: typeof CaptureRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reminders': {
+      id: '/reminders'
+      path: '/reminders'
+      fullPath: '/reminders'
+      preLoaderRoute: typeof RemindersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/people/$personId': {
+      id: '/people/$personId'
+      path: '/people/$personId'
+      fullPath: '/people/$personId'
+      preLoaderRoute: typeof PeoplePersonIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CaptureRoute: CaptureRoute,
+  RemindersRoute: RemindersRoute,
+  PeoplePersonIdRoute: PeoplePersonIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
