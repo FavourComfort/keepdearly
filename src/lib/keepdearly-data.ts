@@ -5,39 +5,39 @@ export type Person = {
   name: string;
   initial: string;
   tone: Tone;
-  relationship?: string;
-  birthday?: string;
-  birthdayIn?: string;
+  relationship?: string | undefined;
+  birthday?: string | undefined;
+  birthdayIn?: string | undefined;
   headline: string;
   likes: string[];
   dislikes: string[];
   giftIdeas: { title: string; note: string; icon: string; tone: Tone }[];
-  hasActiveReminder?: boolean;
+  hasActiveReminder?: boolean | undefined;
 };
 
 export type Memory = {
   id: string;
-  personId?: string;
-  personLabel?: string;
-  topic?: string;
+  personId?: string | undefined;
+  personLabel?: string | undefined;
+  topic?: string | undefined;
   text: string;
   when: string;
-  footnote?: string;
-  footnoteIcon?: string;
+  footnote?: string | undefined;
+  footnoteIcon?: string | undefined;
   tone: Tone;
 };
 
 export type Reminder = {
   id: string;
   title: string;
-  personId?: string;
-  personLabel?: string;
+  personId?: string | undefined;
+  personLabel?: string | undefined;
   date: string;
   timing: string;
   bucket: "today" | "week" | "upcoming";
   note: string;
   tone: Tone;
-  meta?: string;
+  meta?: string | undefined;
 };
 
 export const people: Person[] = [
