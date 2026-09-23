@@ -105,7 +105,7 @@ export function ReminderFeature({
           ) : null}
           <Link
             to="/capture"
-            search={reminder.personId ? { person: reminder.personId } : undefined}
+            search={{ person: reminder.personId }}
             className="rounded-full bg-surface-container-high px-4 py-1.5 text-label-md text-on-surface transition-colors hover:bg-surface-container-highest"
           >
             Add a gift note

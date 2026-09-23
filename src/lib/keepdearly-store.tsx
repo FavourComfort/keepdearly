@@ -18,16 +18,16 @@ import {
 
 type NewMemory = {
   text: string;
-  personId?: string;
-  personLabel?: string;
-  tone?: Tone;
+  personId?: string | undefined;
+  personLabel?: string | undefined;
+  tone?: Tone | undefined;
 };
 
 type Store = {
   people: Person[];
   memories: Memory[];
   reminders: Reminder[];
-  personById: (id?: string) => Person | undefined;
+  personById: (id?: string | undefined) => Person | undefined;
   memoriesFor: (personId: string) => Memory[];
   addMemory: (memory: NewMemory) => void;
   addPerson: (name: string) => Person;
@@ -63,7 +63,7 @@ export function KeepDearlyProvider({ children }: { children: ReactNode }) {
         id: `${trimmed.toLowerCase().replace(/\s+/g, "-")}-${Date.now()}`,
         name: trimmed,
         initial: trimmed.charAt(0).toUpperCase(),
-        tone: tones[people.length % tones.length],
+        tone: tones[people.length % tones.length] ?? "primary",
         headline: "Newly kept close",
         likes: [],
         dislikes: [],
