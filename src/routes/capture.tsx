@@ -9,11 +9,11 @@ import { ReminderSelector } from "@/components/keepdearly/ReminderSelector";
 import { useKeepDearly } from "@/lib/keepdearly-store";
 import { cn } from "@/lib/utils";
 
-type CaptureSearch = { person?: string };
+type CaptureSearch = { person?: string | undefined };
 
 export const Route = createFileRoute("/capture")({
   validateSearch: (search: Record<string, unknown>): CaptureSearch => ({
-    person: typeof search.person === "string" ? search.person : undefined,
+    person: typeof search["person"] === "string" ? (search["person"] as string) : undefined,
   }),
   head: () => ({
     meta: [
