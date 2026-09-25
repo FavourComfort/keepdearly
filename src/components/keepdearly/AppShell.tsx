@@ -1,5 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
+
+import { useAuth, useAuthDisplayName } from "@/lib/auth";
 import { Icon } from "./Icon";
 
 const navLinkBase =
@@ -61,6 +63,12 @@ function BottomNavigation() {
 }
 
 export function AppShell({ children }: { children: ReactNode }) {
+  // Header identity comes from the signed-in Supabase account. Falls back to
+  // "Guest" when nobody is signed in, so the shell still renders on /login.
+  const { status, signOut } = useAuth();
+  const displayName = useAuthDisplayName();
+  const displayInitial = displayName.trim().charAt(0).toUpperCase() || "G";
+
   return (
     <div className="min-h-screen bg-surface">
       <header className="fixed left-0 right-0 top-0 z-50 bg-surface/90 shadow-[0_1px_8px_rgba(0,0,0,0.03)] backdrop-blur-xl">
@@ -110,11 +118,22 @@ export function AppShell({ children }: { children: ReactNode }) {
             </Link>
             <div className="flex items-center gap-2 pl-1">
               <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-fixed text-title-sm text-primary">
-                F
+                {displayInitial}
               </span>
               <span className="hidden text-label-md font-medium text-on-surface sm:inline">
-                Favour
+                {displayName || "Guest"}
               </span>
+              {status === "authenticated" ? (
+                <button
+                  type="button"
+                  onClick={() => void signOut()}
+                  aria-label="Sign out"
+                  title="Sign out"
+                  className="flex h-9 w-9 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container-low hover:text-primary"
+                >
+                  <Icon name="logout" className="text-[18px]" />
+                </button>
+              ) : null}
             </div>
           </div>
         </div>

@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { RequireAuth } from "@/components/auth/guards";
 import { AppShell } from "@/components/keepdearly/AppShell";
 import { ReminderCard, ReminderFeature } from "@/components/keepdearly/ReminderCard";
 import { useKeepDearly } from "@/lib/keepdearly-store";
@@ -28,45 +29,47 @@ function Reminders() {
   const later = reminders.filter((r) => r.bucket === "upcoming");
 
   return (
-    <AppShell>
-      <div className="flex flex-col gap-10 pt-8">
-        <header className="flex flex-col gap-1">
-          <span className="text-label-sm uppercase tracking-widest text-outline">reminders</span>
-          <h1 className="text-headline-lg text-on-surface">Gentle nudges ahead</h1>
-          <p className="text-body-md text-on-surface-variant">
-            Nothing urgent — just the moments you said you&rsquo;d remember.
-          </p>
-        </header>
+    <RequireAuth>
+      <AppShell>
+        <div className="flex flex-col gap-10 pt-8">
+          <header className="flex flex-col gap-1">
+            <span className="text-label-sm uppercase tracking-widest text-outline">reminders</span>
+            <h1 className="text-headline-lg text-on-surface">Gentle nudges ahead</h1>
+            <p className="text-body-md text-on-surface-variant">
+              Nothing urgent — just the moments you said you&rsquo;d remember.
+            </p>
+          </header>
 
-        {today.length ? (
-          <section className="flex flex-col gap-4">
-            <h2 className="text-headline-sm text-on-surface">Today</h2>
-            {today.map((reminder) => (
-              <ReminderFeature key={reminder.id} reminder={reminder} accent />
-            ))}
-          </section>
-        ) : null}
-
-        {week.length ? (
-          <section className="flex flex-col gap-4">
-            <h2 className="text-headline-sm text-on-surface">This week</h2>
-            {week.map((reminder) => (
-              <ReminderFeature key={reminder.id} reminder={reminder} />
-            ))}
-          </section>
-        ) : null}
-
-        {later.length ? (
-          <section className="flex flex-col gap-4">
-            <h2 className="text-headline-sm text-on-surface">Further ahead</h2>
-            <div className="grid gap-4 sm:grid-cols-2">
-              {later.map((reminder) => (
-                <ReminderCard key={reminder.id} reminder={reminder} />
+          {today.length ? (
+            <section className="flex flex-col gap-4">
+              <h2 className="text-headline-sm text-on-surface">Today</h2>
+              {today.map((reminder) => (
+                <ReminderFeature key={reminder.id} reminder={reminder} accent />
               ))}
-            </div>
-          </section>
-        ) : null}
-      </div>
-    </AppShell>
+            </section>
+          ) : null}
+
+          {week.length ? (
+            <section className="flex flex-col gap-4">
+              <h2 className="text-headline-sm text-on-surface">This week</h2>
+              {week.map((reminder) => (
+                <ReminderFeature key={reminder.id} reminder={reminder} />
+              ))}
+            </section>
+          ) : null}
+
+          {later.length ? (
+            <section className="flex flex-col gap-4">
+              <h2 className="text-headline-sm text-on-surface">Further ahead</h2>
+              <div className="grid gap-4 sm:grid-cols-2">
+                {later.map((reminder) => (
+                  <ReminderCard key={reminder.id} reminder={reminder} />
+                ))}
+              </div>
+            </section>
+          ) : null}
+        </div>
+      </AppShell>
+    </RequireAuth>
   );
 }

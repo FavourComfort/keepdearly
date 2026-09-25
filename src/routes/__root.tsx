@@ -11,6 +11,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { AuthProvider } from "../lib/auth";
 import { KeepDearlyProvider } from "../lib/keepdearly-store";
 
 function NotFoundComponent() {
@@ -126,10 +127,12 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <KeepDearlyProvider>
-        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-        <Outlet />
-      </KeepDearlyProvider>
+      <AuthProvider>
+        <KeepDearlyProvider>
+          {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+          <Outlet />
+        </KeepDearlyProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
