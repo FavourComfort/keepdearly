@@ -2,8 +2,8 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 
 import { AppShell } from "@/components/keepdearly/AppShell";
-import { AuthField } from "@/components/keepdearly/AuthField";
 import { AuthNotice } from "@/components/keepdearly/AuthNotice";
+import { PasswordField } from "@/components/keepdearly/PasswordField";
 import { PrimaryButton } from "@/components/keepdearly/PrimaryButton";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
@@ -89,10 +89,9 @@ function ResetPassword() {
           onSubmit={handleSubmit}
           className="flex flex-col gap-4 rounded-xl bg-surface-container-lowest p-6 shadow-sm"
         >
-          <AuthField
+          <PasswordField
             id="password"
             label="New password"
-            type="password"
             autoComplete="new-password"
             placeholder="at least 6 characters"
             value={password}

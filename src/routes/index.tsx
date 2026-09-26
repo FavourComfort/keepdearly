@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { RequireAuth } from "@/components/auth/guards";
 import { AppShell } from "@/components/keepdearly/AppShell";
+import { DataEmpty, DataError, DataLoading } from "@/components/keepdearly/DataState";
 import { Icon } from "@/components/keepdearly/Icon";
 import { MemoryCard } from "@/components/keepdearly/MemoryCard";
 import { PersonCard } from "@/components/keepdearly/PersonCard";
@@ -28,8 +29,12 @@ export const Route = createFileRoute("/")({
 });
 
 function Home() {
-  const { memories, people, reminders, memoriesFor } = useKeepDearly();
-  const upcoming = reminders.slice(0, 2);
+  const { memories, people, reminders, memoriesFor, loading, error } = useKeepDearly();
+  // "Coming up" means coming up. A reminder you already marked done, let go, or
+  // simply never got to is not coming up, and neither is yesterday's.
+  const upcoming = reminders
+    .filter((reminder) => reminder.status === "pending" && !reminder.isOverdue)
+    .slice(0, 2);
 
   return (
     <RequireAuth>
@@ -55,41 +60,68 @@ function Home() {
           </Link>
         </section>
 
-        <section className="mt-14 flex flex-col gap-4">
-          <div className="flex items-baseline justify-between">
-            <h2 className="text-headline-sm text-on-surface">Coming up</h2>
-            <Link to="/reminders" className="text-label-md text-primary hover:underline">
-              See all reminders
-            </Link>
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            {upcoming.map((reminder) => (
-              <ReminderCard key={reminder.id} reminder={reminder} />
-            ))}
-          </div>
-        </section>
+        {loading ? (
+          <DataLoading />
+        ) : error ? (
+          <DataError />
+        ) : (
+          <>
+            <section className="mt-14 flex flex-col gap-4">
+              <div className="flex items-baseline justify-between">
+                <h2 className="text-headline-sm text-on-surface">Coming up</h2>
+                <Link to="/reminders" className="text-label-md text-primary hover:underline">
+                  See all reminders
+                </Link>
+              </div>
+              {upcoming.length ? (
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {upcoming.map((reminder) => (
+                    <ReminderCard key={reminder.id} reminder={reminder} />
+                  ))}
+                </div>
+              ) : (
+                <DataEmpty>
+                  Nothing scheduled yet. Keep a memory, choose a nudge, and it will wait for you
+                  here.
+                </DataEmpty>
+              )}
+            </section>
 
-        <section className="mt-14 flex flex-col gap-4">
-          <h2 className="text-headline-sm text-on-surface">People you keep close</h2>
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-            {people.map((person) => (
-              <PersonCard
-                key={person.id}
-                person={person}
-                memoryCount={memoriesFor(person.id).length}
-              />
-            ))}
-          </div>
-        </section>
+            <section className="mt-14 flex flex-col gap-4">
+              <h2 className="text-headline-sm text-on-surface">People you keep close</h2>
+              {people.length ? (
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                  {people.map((person) => (
+                    <PersonCard
+                      key={person.id}
+                      person={person}
+                      memoryCount={memoriesFor(person.id).length}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <DataEmpty>
+                  Nobody kept close yet. Add a person while you capture, and they will appear here.
+                </DataEmpty>
+              )}
+            </section>
 
-        <section className="mt-14 flex flex-col gap-4">
-          <h2 className="text-headline-sm text-on-surface">Recently kept</h2>
-          <div className="flex flex-col gap-4">
-            {memories.slice(0, 4).map((memory) => (
-              <MemoryCard key={memory.id} memory={memory} />
-            ))}
-          </div>
-        </section>
+            <section className="mt-14 flex flex-col gap-4">
+              <h2 className="text-headline-sm text-on-surface">Recently kept</h2>
+              {memories.length ? (
+                <div className="flex flex-col gap-4">
+                  {memories.slice(0, 4).map((memory) => (
+                    <MemoryCard key={memory.id} memory={memory} />
+                  ))}
+                </div>
+              ) : (
+                <DataEmpty>
+                  Nothing kept yet. Capture the first small thing someone tells you.
+                </DataEmpty>
+              )}
+            </section>
+          </>
+        )}
       </AppShell>
     </RequireAuth>
   );

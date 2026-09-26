@@ -5,6 +5,7 @@ import { RedirectIfAuthenticated } from "@/components/auth/guards";
 import { AppShell } from "@/components/keepdearly/AppShell";
 import { AuthField } from "@/components/keepdearly/AuthField";
 import { AuthNotice } from "@/components/keepdearly/AuthNotice";
+import { PasswordField } from "@/components/keepdearly/PasswordField";
 import { PrimaryButton } from "@/components/keepdearly/PrimaryButton";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
@@ -107,10 +108,9 @@ function SignUp() {
                 value={email}
                 onChange={setEmail}
               />
-              <AuthField
+              <PasswordField
                 id="password"
                 label="Password"
-                type="password"
                 autoComplete="new-password"
                 placeholder="at least 6 characters"
                 value={password}

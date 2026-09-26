@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { RequireAuth } from "@/components/auth/guards";
 import { AppShell } from "@/components/keepdearly/AppShell";
+import { DataError, DataLoading } from "@/components/keepdearly/DataState";
 import { Icon } from "@/components/keepdearly/Icon";
 import { MemoryNote } from "@/components/keepdearly/MemoryCard";
 import { PersonAvatar } from "@/components/keepdearly/PersonAvatar";
@@ -26,8 +27,26 @@ export const Route = createFileRoute("/people/$personId")({
 
 function PersonProfile() {
   const { personId } = Route.useParams();
-  const { personById, memoriesFor } = useKeepDearly();
+  const { personById, memoriesFor, loading, error } = useKeepDearly();
   const person = personById(personId);
+
+  // Wait for the real rows before deciding this person doesn't exist, so a
+  // refresh never flashes the "couldn't find them" state.
+  if (loading) {
+    return (
+      <AppShell>
+        <DataLoading />
+      </AppShell>
+    );
+  }
+
+  if (error) {
+    return (
+      <AppShell>
+        <DataError />
+      </AppShell>
+    );
+  }
 
   if (!person) {
     return (

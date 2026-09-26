@@ -2,11 +2,13 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { RequireAuth } from "@/components/auth/guards";
 import { AppShell } from "@/components/keepdearly/AppShell";
+import { DataNotice } from "@/components/keepdearly/DataState";
 import { Icon } from "@/components/keepdearly/Icon";
 import { MemoryInput } from "@/components/keepdearly/MemoryInput";
 import { PersonAvatar } from "@/components/keepdearly/PersonAvatar";
 import { PrimaryButton } from "@/components/keepdearly/PrimaryButton";
 import { ReminderSelector } from "@/components/keepdearly/ReminderSelector";
+import { isFutureMoment, remindAtForChosenDate, reminderTiming } from "@/lib/keepdearly-data";
 import { useKeepDearly } from "@/lib/keepdearly-store";
 import { cn } from "@/lib/utils";
 
@@ -36,29 +38,54 @@ export const Route = createFileRoute("/capture")({
 function Capture() {
   const { person: initialPerson } = Route.useSearch();
   const navigate = useNavigate();
-  const { people, addMemory, addPerson, personById } = useKeepDearly();
+  const { people, saveMemory } = useKeepDearly();
 
   const [text, setText] = useState("");
   const [personId, setPersonId] = useState<string | undefined>(initialPerson);
   const [newName, setNewName] = useState("");
   const [reminder, setReminder] = useState("none");
+  const [reminderDate, setReminderDate] = useState("");
+  const [reminderTime, setReminderTime] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const canSave = text.trim().length > 0;
+  // "Choose date" only counts as chosen once it names a moment that hasn't
+  // happened yet. The memory itself is always allowed to be kept.
+  const chosenRemindAt =
+    reminder === "date" ? remindAtForChosenDate(reminderDate, reminderTime) : null;
+  const dateMissing = reminder === "date" && chosenRemindAt === null;
+  const dateInPast =
+    reminder === "date" && chosenRemindAt !== null && !isFutureMoment(chosenRemindAt);
+  const reminderInvalid = dateMissing || dateInPast;
 
-  function handleSave() {
+  const canSave = text.trim().length > 0 && !saving && !reminderInvalid;
+
+  async function handleSave() {
     if (!canSave) return;
-    let id = personId;
-    if (!id && newName.trim()) {
-      id = addPerson(newName).id;
-    }
-    const person = id ? personById(id) : undefined;
-    addMemory({
-      text: text.trim(),
-      personId: id,
-      personLabel: person?.name,
-      tone: person?.tone ?? "neutral",
+
+    setSaving(true);
+    setError(null);
+
+    const result = await saveMemory({
+      content: text,
+      personId,
+      newPersonName: newName,
+      reminderOption: reminder,
+      reminderDate,
+      reminderTime,
     });
-    navigate({ to: id ? "/people/$personId" : "/", params: { personId: id ?? "" } });
+
+    setSaving(false);
+
+    if (!result.ok) {
+      setError(result.error);
+      return;
+    }
+
+    await navigate({
+      to: result.personId ? "/people/$personId" : "/",
+      params: { personId: result.personId ?? "" },
+    });
   }
 
   return (
@@ -137,18 +164,42 @@ function Capture() {
             <p className="-mt-1 text-body-sm text-on-surface-variant">
               A quiet reminder, only if you want one.
             </p>
-            <ReminderSelector value={reminder} onChange={setReminder} />
+            <ReminderSelector
+              value={reminder}
+              onChange={setReminder}
+              date={reminderDate}
+              time={reminderTime}
+              onDateChange={setReminderDate}
+              onTimeChange={setReminderTime}
+            />
+            {dateMissing ? (
+              <DataNotice className="mt-2">
+                Pick the day you&rsquo;d like to be nudged &mdash; we&rsquo;ll use 9:00 AM unless
+                you choose a time.
+              </DataNotice>
+            ) : dateInPast ? (
+              <DataNotice tone="error" className="mt-2">
+                That moment has already passed. Pick a day or time that&rsquo;s still ahead, or
+                choose &ldquo;No reminder&rdquo;.
+              </DataNotice>
+            ) : reminder === "date" && chosenRemindAt ? (
+              <DataNotice className="mt-2">
+                Your nudge lands {reminderTiming(chosenRemindAt.toISOString())}.
+              </DataNotice>
+            ) : null}
           </section>
 
+          {error ? <DataNotice tone="error">{error}</DataNotice> : null}
+
           <div className="flex flex-wrap items-center justify-between gap-3 pb-4">
-            <span className="text-label-sm text-outline">Kept privately on this device.</span>
+            <span className="text-label-sm text-outline">Kept privately in your account.</span>
             <PrimaryButton
               onClick={handleSave}
               disabled={!canSave}
               className={cn(!canSave && "opacity-50")}
             >
               <Icon name="favorite" filled className="text-[18px]" />
-              Keep it
+              {saving ? "Keeping…" : "Keep it"}
             </PrimaryButton>
           </div>
         </div>
