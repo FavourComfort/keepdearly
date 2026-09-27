@@ -37,6 +37,18 @@ export type MemoryRow = {
   updated_at: string;
 };
 
+/** A row of public.push_subscriptions: one browser/device Web Push destination. */
+export type PushSubscriptionRow = {
+  id: string;
+  user_id: string;
+  endpoint: string;
+  p256dh: string;
+  auth: string;
+  user_agent: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type ReminderStatus = "pending" | "completed" | "cancelled";
 
 /** A row of `public.reminders`. `remind_at` is the stored intent, not delivery. */
@@ -47,6 +59,12 @@ export type ReminderRow = {
   remind_at: string;
   status: ReminderStatus;
   completed_at: string | null;
+  /**
+   * Phase 4B: when the due-reminder scheduler delivered this row as Web Push.
+   * NULL means not yet delivered. Claimed atomically by
+   * `claim_due_reminder` so a nudge is never sent twice.
+   */
+  notified_at: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -118,6 +136,7 @@ export type Database = {
           remind_at: string;
           status?: ReminderStatus;
           completed_at?: string | null;
+          notified_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -125,13 +144,51 @@ export type Database = {
           remind_at?: string;
           status?: ReminderStatus;
           completed_at?: string | null;
+          notified_at?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      push_subscriptions: {
+        Row: PushSubscriptionRow;
+        Insert: {
+          id?: string;
+          user_id: string;
+          endpoint: string;
+          p256dh: string;
+          auth: string;
+          user_agent?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          endpoint?: string;
+          p256dh?: string;
+          auth?: string;
+          user_agent?: string | null;
           updated_at?: string;
         };
         Relationships: [];
       };
     };
     Views: { [_ in never]: never };
-    Functions: { [_ in never]: never };
+    Functions: {
+      /**
+       * Phase 4B: atomically claim one due reminder for delivery. Sets
+       * `notified_at = now()` only while the row is still pending, still due
+       * and still unclaimed; returns one row either way.
+       */
+      claim_due_reminder: {
+        Args: { p_reminder_id: string };
+        Returns: {
+          claimed: boolean;
+          id: string;
+          user_id: string;
+          memory_id: string;
+          remind_at: string;
+        }[];
+      };
+    };
     Enums: { [_ in never]: never };
     CompositeTypes: { [_ in never]: never };
   };

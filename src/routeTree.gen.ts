@@ -17,6 +17,7 @@ import { Route as RemindersRouteImport } from './routes/reminders'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as PeoplePersonIdRouteImport } from './routes/people.$personId'
+import { Route as ApiRemindersDueRouteImport } from './routes/api.reminders.due'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -58,6 +59,11 @@ const PeoplePersonIdRoute = PeoplePersonIdRouteImport.update({
   path: '/people/$personId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiRemindersDueRoute = ApiRemindersDueRouteImport.update({
+  id: '/api/reminders/due',
+  path: '/api/reminders/due',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -68,6 +74,7 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/people/$personId': typeof PeoplePersonIdRoute
+  '/api/reminders/due': typeof ApiRemindersDueRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -78,6 +85,7 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/people/$personId': typeof PeoplePersonIdRoute
+  '/api/reminders/due': typeof ApiRemindersDueRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -89,6 +97,7 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/people/$personId': typeof PeoplePersonIdRoute
+  '/api/reminders/due': typeof ApiRemindersDueRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -101,6 +110,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/signup'
     | '/people/$personId'
+    | '/api/reminders/due'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -111,6 +121,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/signup'
     | '/people/$personId'
+    | '/api/reminders/due'
   id:
     | '__root__'
     | '/'
@@ -121,6 +132,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/signup'
     | '/people/$personId'
+    | '/api/reminders/due'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -132,6 +144,7 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   SignupRoute: typeof SignupRoute
   PeoplePersonIdRoute: typeof PeoplePersonIdRoute
+  ApiRemindersDueRoute: typeof ApiRemindersDueRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -192,6 +205,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PeoplePersonIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/reminders/due': {
+      id: '/api/reminders/due'
+      path: '/api/reminders/due'
+      fullPath: '/api/reminders/due'
+      preLoaderRoute: typeof ApiRemindersDueRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -204,6 +224,7 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   SignupRoute: SignupRoute,
   PeoplePersonIdRoute: PeoplePersonIdRoute,
+  ApiRemindersDueRoute: ApiRemindersDueRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

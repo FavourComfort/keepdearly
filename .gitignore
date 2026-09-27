@@ -36,3 +36,9 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Local verification scratch for the Web Push crypto (Phase 4B).
+# Kept on disk so `node .verify-webpush.ts` can be re-run, never committed.
+.verify-webpush.ts
+.debug-rfc.ts
+.verify-out.txt

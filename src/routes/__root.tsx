@@ -13,6 +13,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AuthProvider } from "../lib/auth";
 import { KeepDearlyProvider } from "../lib/keepdearly-store";
+import { registerServiceWorker } from "../lib/service-worker";
 
 function NotFoundComponent() {
   return (
@@ -124,6 +125,13 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+
+  // The one place the service worker is registered, so no screen registers a
+  // second one. Runs in the browser only (effects never run during SSR), and the
+  // call itself is a no-op where workers are unsupported.
+  useEffect(() => {
+    void registerServiceWorker();
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>

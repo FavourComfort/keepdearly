@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 
 import { useAuth, useAuthDisplayName } from "@/lib/auth";
 import { Icon } from "./Icon";
+import { PushOptIn } from "./PushOptIn";
 
 const navLinkBase =
   "rounded-full px-4 py-1 text-label-md transition-all text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low";
@@ -153,9 +154,12 @@ export function AppShell({ children }: { children: ReactNode }) {
               A quiet sanctuary for beloved memories and small tokens of tenderness.
             </p>
           </div>
-          <span className="text-label-sm text-on-surface-variant">
-            © 2026 keepdearly. Gentle &amp; discreet.
-          </span>
+          <div className="flex flex-col items-center gap-2 sm:items-end">
+            <PushOptIn />
+            <span className="text-label-sm text-on-surface-variant">
+              © 2026 keepdearly. Gentle &amp; discreet.
+            </span>
+          </div>
         </div>
       </footer>
     </div>
