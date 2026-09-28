@@ -22,6 +22,12 @@ dist-ssr
 .env.*
 !.env.example
 
+# Production CLIENT config is tracked on purpose: every value in
+# `.env.production` is inlined into the public browser bundle by Vite anyway,
+# so committing it leaks nothing and keeps `vite build` self-contained.
+# `.env.local` stays ignored — it holds the server-only secrets.
+!.env.production
+
 # Wrangler / Cloudflare
 .wrangler/
 .dev.vars
