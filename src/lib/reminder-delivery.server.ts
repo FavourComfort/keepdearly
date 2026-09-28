@@ -1,9 +1,9 @@
 /**
  * The Phase 4B due-reminder delivery pass: find due → claim → notify → record.
  *
- * Invoked by `POST /api/reminders/due` (the route gates it with
- * `CRON_SECRET`), which a scheduler calls once per minute. Overlapping runs
- * are safe because delivery claims are atomic:
+ * Invoked by `/api/reminders/due`, which the route gates with `CRON_SECRET` and
+ * answers for both GET and POST. A scheduler calls it once per minute.
+ * Overlapping runs are safe because delivery claims are atomic:
  *
  *  1. Read up to 10 rows that are pending, due and not yet delivered.
  *  2. Before claiming, check the user has a push subscription — a nudge
