@@ -16,6 +16,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as RemindersRouteImport } from './routes/reminders'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SignupRouteImport } from './routes/signup'
+import { Route as ApiDailyNudgeRouteImport } from './routes/api.daily-nudge'
 import { Route as PeoplePersonIdRouteImport } from './routes/people.$personId'
 import { Route as ApiRemindersDueRouteImport } from './routes/api.reminders.due'
 
@@ -54,6 +55,11 @@ const SignupRoute = SignupRouteImport.update({
   path: '/signup',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiDailyNudgeRoute = ApiDailyNudgeRouteImport.update({
+  id: '/api/daily-nudge',
+  path: '/api/daily-nudge',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PeoplePersonIdRoute = PeoplePersonIdRouteImport.update({
   id: '/people/$personId',
   path: '/people/$personId',
@@ -73,6 +79,7 @@ export interface FileRoutesByFullPath {
   '/reminders': typeof RemindersRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
+  '/api/daily-nudge': typeof ApiDailyNudgeRoute
   '/people/$personId': typeof PeoplePersonIdRoute
   '/api/reminders/due': typeof ApiRemindersDueRoute
 }
@@ -84,6 +91,7 @@ export interface FileRoutesByTo {
   '/reminders': typeof RemindersRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
+  '/api/daily-nudge': typeof ApiDailyNudgeRoute
   '/people/$personId': typeof PeoplePersonIdRoute
   '/api/reminders/due': typeof ApiRemindersDueRoute
 }
@@ -96,6 +104,7 @@ export interface FileRoutesById {
   '/reminders': typeof RemindersRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
+  '/api/daily-nudge': typeof ApiDailyNudgeRoute
   '/people/$personId': typeof PeoplePersonIdRoute
   '/api/reminders/due': typeof ApiRemindersDueRoute
 }
@@ -109,6 +118,7 @@ export interface FileRouteTypes {
     | '/reminders'
     | '/reset-password'
     | '/signup'
+    | '/api/daily-nudge'
     | '/people/$personId'
     | '/api/reminders/due'
   fileRoutesByTo: FileRoutesByTo
@@ -120,6 +130,7 @@ export interface FileRouteTypes {
     | '/reminders'
     | '/reset-password'
     | '/signup'
+    | '/api/daily-nudge'
     | '/people/$personId'
     | '/api/reminders/due'
   id:
@@ -131,6 +142,7 @@ export interface FileRouteTypes {
     | '/reminders'
     | '/reset-password'
     | '/signup'
+    | '/api/daily-nudge'
     | '/people/$personId'
     | '/api/reminders/due'
   fileRoutesById: FileRoutesById
@@ -143,6 +155,7 @@ export interface RootRouteChildren {
   RemindersRoute: typeof RemindersRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SignupRoute: typeof SignupRoute
+  ApiDailyNudgeRoute: typeof ApiDailyNudgeRoute
   PeoplePersonIdRoute: typeof PeoplePersonIdRoute
   ApiRemindersDueRoute: typeof ApiRemindersDueRoute
 }
@@ -198,6 +211,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SignupRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/daily-nudge': {
+      id: '/api/daily-nudge'
+      path: '/api/daily-nudge'
+      fullPath: '/api/daily-nudge'
+      preLoaderRoute: typeof ApiDailyNudgeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/people/$personId': {
       id: '/people/$personId'
       path: '/people/$personId'
@@ -223,6 +243,7 @@ const rootRouteChildren: RootRouteChildren = {
   RemindersRoute: RemindersRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SignupRoute: SignupRoute,
+  ApiDailyNudgeRoute: ApiDailyNudgeRoute,
   PeoplePersonIdRoute: PeoplePersonIdRoute,
   ApiRemindersDueRoute: ApiRemindersDueRoute,
 }
