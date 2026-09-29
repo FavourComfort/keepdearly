@@ -220,7 +220,8 @@ export async function processDueReminders(options: {
       const { data: subscriptions, error: subscriptionError } = await supabase
         .from("push_subscriptions")
         .select("id, endpoint, p256dh, auth")
-        .eq("user_id", row.user_id);
+        .eq("user_id", row.user_id)
+        .order("created_at", { ascending: false });
       if (subscriptionError) {
         console.error("Could not read push subscriptions:", subscriptionError.message);
         result.errors += 1;
