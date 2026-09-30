@@ -2,33 +2,13 @@ import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 
 import { useAuth, useAuthDisplayName } from "@/lib/auth";
+import { BrandMark } from "./BrandMark";
 import { Icon } from "./Icon";
 import { PushOptIn } from "./PushOptIn";
 
 const navLinkBase =
   "rounded-full px-4 py-1 text-label-md transition-all text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low";
 const navLinkActive = "bg-surface-container-high text-on-surface font-medium";
-
-function Logo() {
-  return (
-    <svg viewBox="0 0 120 120" className="h-8 w-8 rounded-full" fill="none" aria-hidden>
-      <rect width="120" height="120" rx="32" fill="#FAF6F0" />
-      <path
-        d="M40 38C40 33.5817 43.5817 30 48 30H72C76.4183 30 80 33.5817 80 38V88L60 74L40 88V38Z"
-        fill="#F4EAE2"
-        stroke="#D98E82"
-        strokeWidth="2.5"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M52 48C52 44.5 54.5 42 57.5 42C59.2 42 60 43.2 60 43.2C60 43.2 60.8 42 62.5 42C65.5 42 68 44.5 68 48C68 53.5 60 59 60 59C60 59 52 53.5 52 48Z"
-        fill="#D98E82"
-        opacity="0.9"
-      />
-      <circle cx="60" cy="67" r="1.5" fill="#B07167" />
-    </svg>
-  );
-}
 
 function BottomNavigation() {
   return (
@@ -80,7 +60,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <div className="mx-auto flex h-20 max-w-3xl items-center justify-between gap-4 px-4 pt-[env(safe-area-inset-top)]">
           <Link to="/" className="group flex items-center gap-2">
             <span className="transition-transform group-hover:scale-105">
-              <Logo />
+              <BrandMark className="h-8 w-8" />
             </span>
             <span className="flex flex-col">
               <span className="text-headline-md lowercase leading-none tracking-tight text-primary">

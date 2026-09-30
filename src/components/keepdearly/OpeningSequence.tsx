@@ -1,73 +1,119 @@
+import { useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 
+import { BRAND_NAVY, BrandMark } from "./BrandMark";
+
 /**
- * The KeepDearly opening sequence: mark → name → tagline → app.
+ * The KeepDearly opening sequence and page loader.
  *
- * A quiet welcome, not a splash screen. It shows the brand for roughly a
- * second and a quarter, entirely in opacity and a whisper of scale, then gets
- * out of the way. There is no spinner, no progress bar, and no artificial wait:
- * the app renders underneath it from the very first paint, so this only ever
- * *covers* content that is already there and already usable.
+ * It has two jobs that share one look:
  *
- * Two deliberate decisions:
+ *  1. On app open — the mark appears on its own, then settles into the
+ *     wordmark lockup, then gets out of the way. About 1.2 seconds, so a
+ *     returning user feels a breath rather than a wait.
  *
- *  - It is `pointer-events-none` and `aria-hidden`. It is a decorative flourish,
- *    so it never steals a click and never traps or moves keyboard focus. The
- *    real app sits underneath and stays reachable the whole time, which also
- *    means a failed or slow script can never leave someone locked out of a
- *    working page.
+ *  2. While a page is loading — that same lockup, held quietly, so a slow
+ *     navigation reads as "keepdearly is thinking" rather than a blank screen
+ *     or a browser spinner.
  *
- *  - The mark is the same KeepDearly symbol used everywhere else, loaded from
- *    the verified PWA icon (`/icons/icon-192.png`, the raster of the brand
- *    mark). Reusing the asset rather than re-drawing the SVG keeps a single
- *    source of truth for the identity, and leaves the one documented home for
- *    the brand's literal colors exactly where it is.
+ * A quiet welcome, not a splash screen: opacity and a whisper of scale, no
+ * spinner, no progress bar, and never an artificial wait.
  *
- * The sequence mounts once in the root component, so it plays on app start
- * (including a refresh, a direct link, and a PWA standalone launch) and not
- * again on client-side navigation.
+ * It is `pointer-events-none` and `aria-hidden`, so it never steals a click and
+ * never traps or moves keyboard focus. The real app sits underneath and stays
+ * reachable throughout, which also means a slow or failed script can never lock
+ * anyone out of a working page.
+ *
+ * The mark is the same `BrandMark` the PWA icons are generated from, so the
+ * icon on the Home Screen and the one on screen are the same artwork.
  */
 
-/** The exact brand tagline, unchanged from the rest of the product. */
-const TAGLINE = "the little things that actually matter";
-
-/** The wordmark, lowercase, exactly as the app's own header sets it. */
+/** The wordmark, lowercase, exactly as the brand sets it. */
 const WORDMARK = "keepdearly";
 
-/**
- * Stage timings in milliseconds: mark is already visible, then the name, then
- * the tagline, then the whole thing fades away. Deliberately short — a
- * returning user should feel this as a breath, not a wait.
- */
-const SHOW_NAME_AFTER = 300;
-const SHOW_TAGLINE_AFTER = 620;
+/** The tagline, in the brand sheet's uppercase letterspaced setting. */
+const TAGLINE = "THE LITTLE THINGS THAT ACTUALLY MATTER";
+
+/** Open-sequence timings in milliseconds. Deliberately short. */
+const SHOW_LOCKUP_AFTER = 380;
 const FADE_OUT_AFTER = 980;
 const UNMOUNT_AFTER = 1260;
 
 /** Reduced motion keeps the same sequence, just shorter and without movement. */
 const REDUCED_MOTION_FACTOR = 0.45;
 
+/**
+ * How long a navigation must stay pending before the lockup appears. Without
+ * this, every fast route change would flash the loader and read as jank.
+ */
+const LOADER_DELAY_MS = 220;
+
+/** The wordmark lockup, shared by the open sequence and the page loader. */
+function Lockup({ className }: { className?: string }) {
+  return (
+    <div className={`flex flex-col items-center gap-1.5 ${className ?? ""}`}>
+      <span
+        className="text-headline-md leading-none tracking-tight"
+        style={{ color: BRAND_NAVY, fontFamily: "var(--font-sans)", fontWeight: 700 }}
+      >
+        {WORDMARK}
+      </span>
+      <span className="text-label-sm uppercase tracking-[0.18em] text-on-surface-variant">
+        {TAGLINE}
+      </span>
+    </div>
+  );
+}
+
 export function OpeningSequence() {
-  // 0 = mark, 1 = + name, 2 = + tagline, 3 = fading out.
+  // Route transitions only. The first page load is handled by the open
+  // sequence below, and authentication stays entirely with RequireAuth.
+  const routeLoading = useRouterState({ select: (state) => state.isLoading });
+
+  // 0 = mark on its own, 1 = + lockup, 2 = fading out.
   const [step, setStep] = useState(0);
-  const [visible, setVisible] = useState(true);
+  const [opening, setOpening] = useState(true);
+  const [loaderVisible, setLoaderVisible] = useState(false);
 
   useEffect(() => {
     const timers: number[] = [];
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const scale = (ms: number) => ms * (prefersReducedMotion ? REDUCED_MOTION_FACTOR : 1);
 
-    timers.push(window.setTimeout(() => setStep(1), scale(SHOW_NAME_AFTER)));
-    timers.push(window.setTimeout(() => setStep(2), scale(SHOW_TAGLINE_AFTER)));
-    timers.push(window.setTimeout(() => setStep(3), scale(FADE_OUT_AFTER)));
-    timers.push(window.setTimeout(() => setVisible(false), scale(UNMOUNT_AFTER)));
+    timers.push(window.setTimeout(() => setStep(1), scale(SHOW_LOCKUP_AFTER)));
+    timers.push(window.setTimeout(() => setStep(2), scale(FADE_OUT_AFTER)));
+    timers.push(window.setTimeout(() => setOpening(false), scale(UNMOUNT_AFTER)));
 
     return () => {
       for (const timer of timers) window.clearTimeout(timer);
     };
   }, []);
 
-  if (!visible) return null;
+  // The page loader. Debounced so a quick navigation never flashes it, and
+  // gated on the open sequence finishing so the two never overlap.
+  useEffect(() => {
+    if (opening || !routeLoading) {
+      setLoaderVisible(false);
+      return;
+    }
+    const timer = window.setTimeout(() => setLoaderVisible(true), LOADER_DELAY_MS);
+    return () => window.clearTimeout(timer);
+  }, [routeLoading, opening]);
+
+  if (!opening && !loaderVisible) return null;
+
+  if (!opening) {
+    return (
+      <div
+        aria-hidden="true"
+        className="pointer-events-none fixed inset-0 z-100 flex items-center justify-center bg-surface"
+      >
+        <div className="animate-in fade-in duration-300 motion-reduce:animate-none">
+          <Lockup />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -76,35 +122,22 @@ export function OpeningSequence() {
     >
       <div
         className={`flex flex-col items-center gap-3 transition-all duration-500 ease-out motion-reduce:transition-none ${
-          step >= 3 ? "scale-95 opacity-0 motion-reduce:scale-100" : "scale-100 opacity-100"
+          step >= 2 ? "scale-95 opacity-0 motion-reduce:scale-100" : "scale-100 opacity-100"
         }`}
       >
-        <img
-          src="/icons/icon-192.png"
-          alt=""
-          width={72}
-          height={72}
+        <BrandMark
           className={`h-18 w-18 transition-all duration-700 ease-out motion-reduce:transition-none ${
-            step >= 3 ? "opacity-0" : "opacity-100"
+            step >= 1 ? "scale-90 opacity-0" : "scale-100 opacity-100"
           }`}
-          style={{ transitionDelay: step >= 3 ? "0ms" : "80ms" }}
         />
 
-        <span
-          className={`text-headline-md lowercase leading-none tracking-tight text-primary transition-all duration-500 ease-out motion-reduce:transition-none ${
+        <div
+          className={`transition-all duration-500 ease-out motion-reduce:transition-none ${
             step >= 1 ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0"
           } motion-reduce:translate-y-0`}
         >
-          {WORDMARK}
-        </span>
-
-        <span
-          className={`max-w-[16rem] text-center text-body-sm leading-tight text-on-surface-variant transition-opacity duration-500 ease-out motion-reduce:transition-none ${
-            step >= 2 ? "opacity-100" : "opacity-0"
-          }`}
-        >
-          {TAGLINE}
-        </span>
+          <Lockup />
+        </div>
       </div>
     </div>
   );

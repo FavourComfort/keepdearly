@@ -84,7 +84,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       // Island so `env(safe-area-inset-*)` reports real values instead of
       // zeros. Without it the safe-area insets below are silently inert.
       { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
-      { name: "theme-color", content: "#FBF9F5" },
+      { name: "theme-color", content: "#FDF7F0" },
       { title: "keepdearly" },
       { name: "description", content: "The little things that actually matter." },
       { property: "og:type", content: "website" },
