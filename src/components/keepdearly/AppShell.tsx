@@ -32,7 +32,7 @@ function Logo() {
 
 function BottomNavigation() {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around bg-surface/90 px-4 py-2 shadow-[0_-2px_12px_rgba(0,0,0,0.03)] backdrop-blur-xl md:hidden">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around bg-surface/90 px-4 py-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] shadow-[0_-2px_12px_rgba(0,0,0,0.03)] backdrop-blur-xl md:hidden">
       <Link
         to="/"
         activeOptions={{ exact: true }}
@@ -73,7 +73,11 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen bg-surface">
       <header className="fixed left-0 right-0 top-0 z-50 bg-surface/90 shadow-[0_1px_8px_rgba(0,0,0,0.03)] backdrop-blur-xl">
-        <div className="mx-auto flex h-20 max-w-3xl items-center justify-between gap-4 px-4">
+        {/* The status bar / notch / Dynamic Island sits over the top of the
+            screen. Padding the bar by the top inset keeps the wordmark and
+            avatar clear of it without changing the 5rem bar height everywhere
+            else — on a device with no inset this is exactly 0. */}
+        <div className="mx-auto flex h-20 max-w-3xl items-center justify-between gap-4 px-4 pt-[env(safe-area-inset-top)]">
           <Link to="/" className="group flex items-center gap-2">
             <span className="transition-transform group-hover:scale-105">
               <Logo />
@@ -141,12 +145,17 @@ export function AppShell({ children }: { children: ReactNode }) {
       </header>
 
       <main className="w-full bg-surface pb-24 pt-20 md:pb-16">
-        <div className="mx-auto min-h-[calc(100vh-14rem)] max-w-3xl px-4">{children}</div>
+        {/* dvh rather than vh: on iOS the address bar collapses and 100vh is
+            the taller, hidden-toolbar height, which left a dead gap at the
+            bottom of short pages. */}
+        <div className="mx-auto min-h-[calc(100vh-14rem)] min-h-[calc(100dvh-14rem)] max-w-3xl px-4">
+          {children}
+        </div>
       </main>
 
       <BottomNavigation />
 
-      <footer className="mt-14 w-full bg-surface-container-low py-9 pb-28 md:pb-9">
+      <footer className="mt-14 w-full bg-surface-container-low py-9 pb-[calc(7rem+env(safe-area-inset-bottom))] md:pb-9">
         <div className="mx-auto flex max-w-3xl flex-col items-center justify-between gap-4 px-4 text-center sm:flex-row sm:text-left">
           <div className="flex flex-col gap-1">
             <span className="text-headline-sm lowercase text-primary">keepdearly</span>

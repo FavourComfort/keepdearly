@@ -14,6 +14,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AuthProvider } from "../lib/auth";
 import { KeepDearlyProvider } from "../lib/keepdearly-store";
 import { registerServiceWorker } from "../lib/service-worker";
+import { OpeningSequence } from "../components/keepdearly/OpeningSequence";
 
 function NotFoundComponent() {
   return (
@@ -79,7 +80,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
+      // `viewport-fit=cover` lets the layout reach under the notch / Dynamic
+      // Island so `env(safe-area-inset-*)` reports real values instead of
+      // zeros. Without it the safe-area insets below are silently inert.
+      { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
+      { name: "theme-color", content: "#FBF9F5" },
       { title: "keepdearly" },
       { name: "description", content: "The little things that actually matter." },
       { property: "og:type", content: "website" },
@@ -91,6 +96,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         href: appCss,
       },
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      // The Home Screen icon on iOS. Same approved mark, no new artwork.
+      { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
+      { rel: "manifest", href: "/site.webmanifest" },
+      // iOS reads its own tags for an installed web app: a full-bleed
+      // standalone launch, the KeepDearly surface behind the status bar, and
+      // the lowercase wordmark as the Home Screen label. Chrome and Android
+      // ignore these, so nothing else changes.
+      { rel: "apple-mobile-web-app-capable", href: "/site.webmanifest" },
+      { rel: "apple-mobile-web-app-status-bar-style", href: "default" },
+      { rel: "apple-mobile-web-app-title", href: "keepdearly" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
@@ -139,6 +154,13 @@ function RootComponent() {
         <KeepDearlyProvider>
           {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
           <Outlet />
+          {/*
+            The brand opening sequence, layered over the real app rather than in
+            front of it. It is inert (pointer-events-none, aria-hidden) and
+            unmounts itself, so the router, the providers and the outlet below it
+            mount, authenticate and render exactly as they always have.
+          */}
+          <OpeningSequence />
         </KeepDearlyProvider>
       </AuthProvider>
     </QueryClientProvider>
