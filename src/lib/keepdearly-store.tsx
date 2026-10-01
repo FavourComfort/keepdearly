@@ -10,21 +10,24 @@ import {
 
 import { useAuth } from "./auth";
 import { getSupabase } from "./supabase";
-import type { MemoryRow, PersonRow, ReminderRow } from "./supabase.types";
+import type { MemoryRow, PersonRow, ReminderRow, ScheduledMessageRow } from "./supabase.types";
 import {
   PERSONAL_NOTE_LABEL,
   initialForName,
   isFutureMoment,
+  isReasonableEmail,
   memoryWhen,
   remindAtForChosenDate,
   remindAtForOption,
   reminderBucket,
   reminderIsOverdue,
   reminderTiming,
+  scheduledMessageTiming,
   toneForId,
   type Memory,
   type Person,
   type Reminder,
+  type ScheduledMessage,
 } from "./keepdearly-data";
 
 /**
@@ -69,19 +72,44 @@ export type ReminderActionResult = {
   error: string | null;
 };
 
+/** Inputs for creating one scheduled message. */
+export type SaveScheduledMessageInput = {
+  personId: string;
+  /** Saved here trimmed by the store, so callers cannot forget. */
+  body: string;
+  /** An absolute moment, already resolved from the user's local date+time. */
+  sendAt: Date;
+};
+
+export type ScheduledMessageActionResult = {
+  ok: boolean;
+  error: string | null;
+};
+
+const MESSAGE_ERROR = "We couldn't save that message just now.";
+const EMAIL_ERROR = "We couldn't save that email just now.";
+const BAD_EMAIL_ERROR = "That doesn't look like an email address.";
+const PAST_MESSAGE_ERROR = "Pick a moment that hasn't happened yet.";
+const CANCEL_ERROR = "We couldn't cancel that message just now.";
+
 type Store = {
   people: Person[];
   memories: Memory[];
   reminders: Reminder[];
+  scheduledMessages: ScheduledMessage[];
   loading: boolean;
   error: string | null;
   refresh: () => Promise<void>;
   personById: (id?: string | undefined) => Person | undefined;
   memoriesFor: (personId: string) => Memory[];
+  scheduledMessagesFor: (personId: string) => ScheduledMessage[];
   saveMemory: (input: SaveMemoryInput) => Promise<SaveMemoryResult>;
   completeReminder: (id: string) => Promise<ReminderActionResult>;
   cancelReminder: (id: string) => Promise<ReminderActionResult>;
   rescheduleReminder: (id: string, remindAt: Date) => Promise<ReminderActionResult>;
+  savePersonEmail: (personId: string, email: string) => Promise<ScheduledMessageActionResult>;
+  saveScheduledMessage: (input: SaveScheduledMessageInput) => Promise<ScheduledMessageActionResult>;
+  cancelScheduledMessage: (id: string) => Promise<ScheduledMessageActionResult>;
 };
 
 const KeepDearlyContext = createContext<Store | null>(null);
@@ -119,6 +147,18 @@ function toPersonView(row: PersonRow, memories: MemoryRow[], reminders: Reminder
     dislikes: [],
     giftIdeas: [],
     hasActiveReminder,
+    email: row.email,
+  };
+}
+
+function toScheduledMessageView(row: ScheduledMessageRow, now: Date): ScheduledMessage {
+  return {
+    id: row.id,
+    personId: row.person_id,
+    body: row.body,
+    sendAt: row.send_at,
+    status: row.status,
+    timing: scheduledMessageTiming(row.send_at, now),
   };
 }
 
@@ -157,6 +197,7 @@ export function KeepDearlyProvider({ children }: { children: ReactNode }) {
   const [personRows, setPersonRows] = useState<PersonRow[]>([]);
   const [memoryRows, setMemoryRows] = useState<MemoryRow[]>([]);
   const [reminderRows, setReminderRows] = useState<ReminderRow[]>([]);
+  const [scheduledMessageRows, setScheduledMessageRows] = useState<ScheduledMessageRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -178,6 +219,7 @@ export function KeepDearlyProvider({ children }: { children: ReactNode }) {
       setPersonRows([]);
       setMemoryRows([]);
       setReminderRows([]);
+      setScheduledMessageRows([]);
       setLoading(false);
       setError(null);
       return;
@@ -189,7 +231,7 @@ export function KeepDearlyProvider({ children }: { children: ReactNode }) {
     const supabase = getSupabase();
     // Every read is additionally filtered by user_id. RLS already enforces it;
     // being explicit keeps the intent readable and survives a mis-set policy.
-    const [peopleResult, memoriesResult, remindersResult] = await Promise.all([
+    const [peopleResult, memoriesResult, remindersResult, scheduledResult] = await Promise.all([
       supabase
         .from("people")
         .select("*")
@@ -205,9 +247,15 @@ export function KeepDearlyProvider({ children }: { children: ReactNode }) {
         .select("*")
         .eq("user_id", userId)
         .order("remind_at", { ascending: true }),
+      supabase
+        .from("scheduled_messages")
+        .select("*")
+        .eq("user_id", userId)
+        .order("send_at", { ascending: true }),
     ]);
 
-    const failure = peopleResult.error ?? memoriesResult.error ?? remindersResult.error;
+    const failure =
+      peopleResult.error ?? memoriesResult.error ?? remindersResult.error ?? scheduledResult.error;
     if (failure) {
       // The real reason goes to the console; the screen gets a gentle message.
       console.error("Could not load KeepDearly data:", failure.message);
@@ -215,10 +263,11 @@ export function KeepDearlyProvider({ children }: { children: ReactNode }) {
     }
 
     // Only replace what actually came back, so one failed read cannot wipe
-    // data the other two delivered.
+    // data the others delivered.
     if (peopleResult.data) setPersonRows(peopleResult.data);
     if (memoriesResult.data) setMemoryRows(memoriesResult.data);
     if (remindersResult.data) setReminderRows(remindersResult.data);
+    if (scheduledResult.data) setScheduledMessageRows(scheduledResult.data);
 
     setLoading(false);
   }, [userId, isConfigured]);
@@ -238,6 +287,86 @@ export function KeepDearlyProvider({ children }: { children: ReactNode }) {
   const reminders = useMemo(
     () => reminderRows.map((row) => toReminderView(row, memoryRows, personRows, new Date(nowMs))),
     [reminderRows, memoryRows, personRows, nowMs],
+  );
+  const scheduledMessages = useMemo(
+    () => scheduledMessageRows.map((row) => toScheduledMessageView(row, new Date(nowMs))),
+    [scheduledMessageRows, nowMs],
+  );
+
+  // Phase 6B: the person's own address, saved once so the message form never
+  // asks for it again. An empty value clears it, because `people.email` is
+  // optional and "I don't know their address" is a legitimate answer.
+  const savePersonEmail = useCallback(
+    async (personId: string, email: string): Promise<ScheduledMessageActionResult> => {
+      const trimmed = email.trim();
+      if (trimmed && !isReasonableEmail(trimmed)) {
+        return { ok: false, error: BAD_EMAIL_ERROR };
+      }
+
+      const { error } = await getSupabase()
+        .from("people")
+        .update({ email: trimmed || null })
+        .eq("id", personId)
+        .eq("user_id", userId ?? "");
+      if (error) {
+        console.error("Could not save person email:", error.message);
+        return { ok: false, error: EMAIL_ERROR };
+      }
+      return { ok: true, error: null };
+    },
+    [userId],
+  );
+
+  // Phase 6B: write the message. Deliberately sets nothing but the four fields
+  // the owner is allowed to set — `status`, `sent_at`, `last_error` and
+  // `attempts` are left to the database default and the server's delivery job,
+  // so a browser cannot forge a message that looks already sent.
+  const saveScheduledMessage = useCallback(
+    async ({
+      personId,
+      body,
+      sendAt,
+    }: SaveScheduledMessageInput): Promise<ScheduledMessageActionResult> => {
+      const trimmed = body.trim();
+      if (!trimmed) return { ok: false, error: MESSAGE_ERROR };
+      if (!isFutureMoment(sendAt)) return { ok: false, error: PAST_MESSAGE_ERROR };
+      if (!userId) return { ok: false, error: MESSAGE_ERROR };
+
+      const { error } = await getSupabase().from("scheduled_messages").insert({
+        user_id: userId,
+        person_id: personId,
+        body: trimmed,
+        // The user picked a local date and time; this is that moment, resolved.
+        send_at: sendAt.toISOString(),
+      });
+      if (error) {
+        console.error("Could not save scheduled message:", error.message);
+        return { ok: false, error: MESSAGE_ERROR };
+      }
+      return { ok: true, error: null };
+    },
+    [userId],
+  );
+
+  // Cancelling is a soft delete: the row is kept with status 'cancelled' so the
+  // history stays honest, and so a delivery job mid-run cannot race it away.
+  const cancelScheduledMessage = useCallback(
+    async (id: string): Promise<ScheduledMessageActionResult> => {
+      const { error } = await getSupabase()
+        .from("scheduled_messages")
+        .update({ status: "cancelled" })
+        .eq("id", id)
+        .eq("user_id", userId ?? "")
+        // Only a message that has not gone out can be withdrawn. A sent one is
+        // left exactly as it is, which is why the button is hidden for those.
+        .eq("status", "pending");
+      if (error) {
+        console.error("Could not cancel scheduled message:", error.message);
+        return { ok: false, error: CANCEL_ERROR };
+      }
+      return { ok: true, error: null };
+    },
+    [userId],
   );
 
   const saveMemory = useCallback(
@@ -398,20 +527,27 @@ export function KeepDearlyProvider({ children }: { children: ReactNode }) {
       people,
       memories,
       reminders,
+      scheduledMessages,
       loading,
       error,
       refresh: load,
       personById: (id) => (id ? people.find((person) => person.id === id) : undefined),
       memoriesFor: (personId) => memories.filter((memory) => memory.personId === personId),
+      scheduledMessagesFor: (personId) =>
+        scheduledMessages.filter((message) => message.personId === personId),
       saveMemory,
       completeReminder,
       cancelReminder,
       rescheduleReminder,
+      savePersonEmail,
+      saveScheduledMessage,
+      cancelScheduledMessage,
     }),
     [
       people,
       memories,
       reminders,
+      scheduledMessages,
       loading,
       error,
       load,
@@ -419,6 +555,9 @@ export function KeepDearlyProvider({ children }: { children: ReactNode }) {
       completeReminder,
       cancelReminder,
       rescheduleReminder,
+      savePersonEmail,
+      saveScheduledMessage,
+      cancelScheduledMessage,
     ],
   );
 

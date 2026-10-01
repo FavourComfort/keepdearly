@@ -10,6 +10,12 @@ export type Profile = {
   id: string;
   full_name: string | null;
   avatar_url: string | null;
+  /**
+   * Phase 6A: the Plus entitlement flag. Read-only from the client — migration
+   * 0007 revoked table-level UPDATE and re-granted it per column, so the
+   * browser cannot set this for itself. Only a trusted server path can.
+   */
+  plus_active: boolean;
   created_at: string;
   updated_at: string;
 };
@@ -20,6 +26,32 @@ export type PersonRow = {
   user_id: string;
   name: string;
   avatar_url: string | null;
+  /**
+   * Phase 6A: where to send this person a scheduled message. Optional — most
+   * people have no address, and a recipient needs no KeepDearly account.
+   */
+  email: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+/**
+ * A row of `public.scheduled_messages` (Phase 6A).
+ *
+ * One prepared message for one saved person, waiting to be sent by email at
+ * `send_at`. Delivery fields (`sent_at`, `last_error`, `attempts`) belong to the
+ * server's delivery job; the client only ever writes `body` and `send_at`.
+ */
+export type ScheduledMessageRow = {
+  id: string;
+  user_id: string;
+  person_id: string;
+  body: string;
+  send_at: string;
+  status: "pending" | "sending" | "sent" | "failed" | "cancelled";
+  sent_at: string | null;
+  last_error: string | null;
+  attempts: number;
   created_at: string;
   updated_at: string;
 };
@@ -106,6 +138,8 @@ export type Database = {
         Update: {
           name?: string;
           avatar_url?: string | null;
+          /** Phase 6B: set or cleared (null) by the owner from their person screen. */
+          email?: string | null;
           updated_at?: string;
         };
         Relationships: [];
@@ -166,6 +200,28 @@ export type Database = {
           p256dh?: string;
           auth?: string;
           user_agent?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      scheduled_messages: {
+        Row: ScheduledMessageRow;
+        Insert: {
+          id?: string;
+          user_id: string;
+          person_id: string;
+          body: string;
+          send_at: string;
+          // Server-owned delivery fields. Absent from Insert on purpose: the
+          // client cannot set `status`, `sent_at`, `last_error` or `attempts`,
+          // so a browser cannot forge a "sent" row.
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          // Only what the owner may legitimately change. Cancelling moves
+          // status; the body and moment stay as the user wrote them.
+          status?: ScheduledMessageRow["status"];
           updated_at?: string;
         };
         Relationships: [];

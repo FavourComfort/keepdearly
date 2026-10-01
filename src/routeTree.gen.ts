@@ -19,6 +19,7 @@ import { Route as SignupRouteImport } from './routes/signup'
 import { Route as ApiDailyNudgeRouteImport } from './routes/api.daily-nudge'
 import { Route as PeoplePersonIdRouteImport } from './routes/people.$personId'
 import { Route as ApiRemindersDueRouteImport } from './routes/api.reminders.due'
+import { Route as PeoplePersonIdMessageRouteImport } from './routes/people.$personId.message'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -70,6 +71,11 @@ const ApiRemindersDueRoute = ApiRemindersDueRouteImport.update({
   path: '/api/reminders/due',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PeoplePersonIdMessageRoute = PeoplePersonIdMessageRouteImport.update({
+  id: '/message',
+  path: '/message',
+  getParentRoute: () => PeoplePersonIdRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -80,8 +86,9 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/api/daily-nudge': typeof ApiDailyNudgeRoute
-  '/people/$personId': typeof PeoplePersonIdRoute
+  '/people/$personId': typeof PeoplePersonIdRouteWithChildren
   '/api/reminders/due': typeof ApiRemindersDueRoute
+  '/people/$personId/message': typeof PeoplePersonIdMessageRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -92,8 +99,9 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/api/daily-nudge': typeof ApiDailyNudgeRoute
-  '/people/$personId': typeof PeoplePersonIdRoute
+  '/people/$personId': typeof PeoplePersonIdRouteWithChildren
   '/api/reminders/due': typeof ApiRemindersDueRoute
+  '/people/$personId/message': typeof PeoplePersonIdMessageRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -105,8 +113,9 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/api/daily-nudge': typeof ApiDailyNudgeRoute
-  '/people/$personId': typeof PeoplePersonIdRoute
+  '/people/$personId': typeof PeoplePersonIdRouteWithChildren
   '/api/reminders/due': typeof ApiRemindersDueRoute
+  '/people/$personId/message': typeof PeoplePersonIdMessageRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -121,6 +130,7 @@ export interface FileRouteTypes {
     | '/api/daily-nudge'
     | '/people/$personId'
     | '/api/reminders/due'
+    | '/people/$personId/message'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -133,6 +143,7 @@ export interface FileRouteTypes {
     | '/api/daily-nudge'
     | '/people/$personId'
     | '/api/reminders/due'
+    | '/people/$personId/message'
   id:
     | '__root__'
     | '/'
@@ -145,6 +156,7 @@ export interface FileRouteTypes {
     | '/api/daily-nudge'
     | '/people/$personId'
     | '/api/reminders/due'
+    | '/people/$personId/message'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -156,7 +168,7 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   SignupRoute: typeof SignupRoute
   ApiDailyNudgeRoute: typeof ApiDailyNudgeRoute
-  PeoplePersonIdRoute: typeof PeoplePersonIdRoute
+  PeoplePersonIdRoute: typeof PeoplePersonIdRouteWithChildren
   ApiRemindersDueRoute: typeof ApiRemindersDueRoute
 }
 
@@ -232,8 +244,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiRemindersDueRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/people/$personId/message': {
+      id: '/people/$personId/message'
+      path: '/message'
+      fullPath: '/people/$personId/message'
+      preLoaderRoute: typeof PeoplePersonIdMessageRouteImport
+      parentRoute: typeof PeoplePersonIdRoute
+    }
   }
 }
+
+interface PeoplePersonIdRouteChildren {
+  PeoplePersonIdMessageRoute: typeof PeoplePersonIdMessageRoute
+}
+
+const PeoplePersonIdRouteChildren: PeoplePersonIdRouteChildren = {
+  PeoplePersonIdMessageRoute: PeoplePersonIdMessageRoute,
+}
+
+const PeoplePersonIdRouteWithChildren = PeoplePersonIdRoute._addFileChildren(
+  PeoplePersonIdRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -244,7 +275,7 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   SignupRoute: SignupRoute,
   ApiDailyNudgeRoute: ApiDailyNudgeRoute,
-  PeoplePersonIdRoute: PeoplePersonIdRoute,
+  PeoplePersonIdRoute: PeoplePersonIdRouteWithChildren,
   ApiRemindersDueRoute: ApiRemindersDueRoute,
 }
 export const routeTree = rootRouteImport

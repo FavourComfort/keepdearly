@@ -5,6 +5,9 @@ import { DataError, DataLoading } from "@/components/keepdearly/DataState";
 import { Icon } from "@/components/keepdearly/Icon";
 import { MemoryNote } from "@/components/keepdearly/MemoryCard";
 import { PersonAvatar } from "@/components/keepdearly/PersonAvatar";
+import { PersonEmailField } from "@/components/keepdearly/PersonEmailField";
+import { ScheduledMessages } from "@/components/keepdearly/ScheduledMessages";
+import { useAuth } from "@/lib/auth";
 import { useKeepDearly } from "@/lib/keepdearly-store";
 
 export const Route = createFileRoute("/people/$personId")({
@@ -28,7 +31,12 @@ export const Route = createFileRoute("/people/$personId")({
 function PersonProfile() {
   const { personId } = Route.useParams();
   const { personById, memoriesFor, loading, error } = useKeepDearly();
+  const { profile } = useAuth();
   const person = personById(personId);
+  // Phase 6B: scheduling a message is a Plus affordance. Shown as a quiet hint
+  // to everyone else rather than a hidden feature — Phase 6D makes the check
+  // authoritative on the server.
+  const isPlus = profile?.plus_active === true;
 
   // Wait for the real rows before deciding this person doesn't exist, so a
   // refresh never flashes the "couldn't find them" state.
@@ -95,6 +103,23 @@ function PersonProfile() {
               <Icon name="add" className="text-[16px]" />
               Keep something about {person.name}
             </Link>
+            {/* Phase 6B entry point. Plus users get the real action; everyone
+                else sees a quiet mention of it rather than nothing at all. */}
+            {isPlus && person.email ? (
+              <Link
+                to="/people/$personId/message"
+                params={{ personId: person.id }}
+                className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-2.5 text-label-md text-on-primary shadow-sm transition-all hover:bg-tertiary active:scale-95"
+              >
+                <Icon name="schedule_send" className="text-[16px]" />
+                Send a message later
+              </Link>
+            ) : (
+              <span className="inline-flex items-center gap-2 rounded-full bg-primary-fixed px-4 py-1.5 text-label-sm text-on-primary-fixed-variant">
+                <Icon name="workspace_premium" filled className="text-[14px]" />
+                Send a message later — with Plus
+              </span>
+            )}
           </header>
 
           <section className="grid gap-4 sm:grid-cols-2">
@@ -171,6 +196,13 @@ function PersonProfile() {
                 Nothing kept about {person.name} yet — the next small thing they say can live here.
               </p>
             )}
+          </section>
+
+          {/* Phase 6B: where a message would go, and what is already queued. */}
+          <section className="flex flex-col gap-4">
+            <h2 className="text-headline-sm text-on-surface">Send a message</h2>
+            <PersonEmailField personId={person.id} personName={person.name} />
+            <ScheduledMessages personId={person.id} personName={person.name} />
           </section>
         </div>
       </AppShell>

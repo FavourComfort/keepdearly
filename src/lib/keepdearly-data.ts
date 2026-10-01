@@ -42,6 +42,12 @@ export type Person = {
   dislikes: string[];
   giftIdeas: { title: string; note: string; icon: string; tone: Tone }[];
   hasActiveReminder: boolean;
+  /**
+   * Phase 6B: where a scheduled message to this person would be sent, or null
+   * when they have no address yet. Saved once on the person so the user is
+   * never asked to retype it for every message.
+   */
+  email: string | null;
   relationship?: string | undefined;
   birthday?: string | undefined;
   birthdayIn?: string | undefined;
@@ -313,4 +319,68 @@ export function todayDateInputValue(now: Date = new Date()): string {
   const month = String(now.getMonth() + 1).padStart(2, "0");
   const day = String(now.getDate()).padStart(2, "0");
   return `${now.getFullYear()}-${month}-${day}`;
+}
+
+// ---------------------------------------------------------------------------
+// Scheduled messages (Phase 6B)
+// ---------------------------------------------------------------------------
+
+/** Mirrors the database's status vocabulary; nothing here invents a state. */
+export type ScheduledMessageStatus = "pending" | "sending" | "sent" | "failed" | "cancelled";
+
+/**
+ * A scheduled message as the UI sees it.
+ *
+ * Only what the person screen renders: the words, who they are for, when they
+ * are due, and where they have got to. Delivery bookkeeping (attempts,
+ * last_error) stays on the server side where it belongs.
+ */
+export type ScheduledMessage = {
+  id: string;
+  personId: string;
+  body: string;
+  /** The stored moment, as an ISO string. */
+  sendAt: string;
+  status: ScheduledMessageStatus;
+  /** A human phrase for `send_at`, e.g. "in 3 days". Derived, never stored. */
+  timing: string;
+};
+
+/**
+ * Says when a scheduled message goes out, in the same warm register as
+ * `reminderTiming` rather than a raw timestamp.
+ */
+export function scheduledMessageTiming(sendAt: string, now: Date = new Date()): string {
+  const when = new Date(sendAt);
+  if (Number.isNaN(when.getTime())) return "at a moment to decide";
+
+  const diffMs = when.getTime() - now.getTime();
+  if (diffMs <= 0) return "due now";
+
+  const minutes = Math.round(diffMs / 60_000);
+  if (minutes < 60) return `in ${minutes} minute${minutes === 1 ? "" : "s"}`;
+
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `in ${hours} hour${hours === 1 ? "" : "s"}`;
+
+  const days = Math.round(hours / 24);
+  if (days <= 30) return `in ${days} day${days === 1 ? "" : "s"}`;
+
+  return when.toLocaleDateString(undefined, { day: "numeric", month: "short" });
+}
+
+/**
+ * A deliberately forgiving email check.
+ *
+ * Enough to catch a typo or a pasted phone number before it is saved, not a
+ * full RFC 5322 parser — real validation belongs to whoever eventually sends,
+ * and a stricter rule would only push people into giving up.
+ */
+export function isReasonableEmail(value: string): boolean {
+  const trimmed = value.trim();
+  if (!trimmed || /\s/.test(trimmed)) return false;
+  const at = trimmed.indexOf("@");
+  if (at < 1 || at !== trimmed.lastIndexOf("@")) return false;
+  const domain = trimmed.slice(at + 1);
+  return domain.includes(".") && !domain.startsWith(".") && !domain.endsWith(".");
 }
