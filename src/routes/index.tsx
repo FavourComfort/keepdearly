@@ -60,10 +60,32 @@ function Home() {
           </Link>
           <Link
             to="/plus"
-            className="inline-flex items-center gap-2 text-label-md font-medium text-primary transition-colors hover:text-primary/80"
+            className="group mt-2 flex w-full max-w-md items-center justify-between gap-4 rounded-2xl border border-outline-variant/40 bg-surface-container-lowest px-4 py-4 text-left transition-colors hover:bg-surface-container-low sm:px-5"
           >
-            <Icon name="workspace_premium" className="text-[16px]" />
-            KeepDearly Plus — UGX 2,000
+            <span className="flex min-w-0 items-start gap-3">
+              <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-fixed text-primary">
+                <Icon name="schedule" className="text-[18px]" />
+              </span>
+              <span className="flex min-w-0 flex-col gap-0.5">
+                <span className="text-label-sm text-on-surface-variant">KeepDearly Plus</span>
+                <span className="text-title-sm text-on-surface">
+                  Let KeepDearly remember for you.
+                </span>
+                <span className="text-body-sm text-on-surface-variant">
+                  Write a message today. We&rsquo;ll send it when the moment comes.
+                </span>
+              </span>
+            </span>
+            <span className="flex shrink-0 flex-col items-end gap-1">
+              <span className="text-label-sm text-on-surface-variant">UGX 2,000 once</span>
+              <span className="inline-flex items-center gap-1 text-label-md font-medium text-primary">
+                Learn more
+                <Icon
+                  name="arrow_forward"
+                  className="text-[16px] transition-transform group-hover:translate-x-0.5"
+                />
+              </span>
+            </span>
           </Link>
         </section>
 
