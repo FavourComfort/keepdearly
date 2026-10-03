@@ -21,6 +21,7 @@ import { Route as ApiDailyNudgeRouteImport } from './routes/api.daily-nudge'
 import { Route as PeoplePersonIdRouteImport } from './routes/people.$personId'
 import { Route as ApiMessagesDueRouteImport } from './routes/api.messages.due'
 import { Route as ApiPlusCheckoutRouteImport } from './routes/api.plus.checkout'
+import { Route as ApiPlusRetryRouteImport } from './routes/api.plus.retry'
 import { Route as ApiPlusStatusRouteImport } from './routes/api.plus.status'
 import { Route as ApiPlusWebhookRouteImport } from './routes/api.plus.webhook'
 import { Route as ApiRemindersDueRouteImport } from './routes/api.reminders.due'
@@ -86,6 +87,11 @@ const ApiPlusCheckoutRoute = ApiPlusCheckoutRouteImport.update({
   path: '/api/plus/checkout',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPlusRetryRoute = ApiPlusRetryRouteImport.update({
+  id: '/api/plus/retry',
+  path: '/api/plus/retry',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPlusStatusRoute = ApiPlusStatusRouteImport.update({
   id: '/api/plus/status',
   path: '/api/plus/status',
@@ -120,6 +126,7 @@ export interface FileRoutesByFullPath {
   '/people/$personId': typeof PeoplePersonIdRouteWithChildren
   '/api/messages/due': typeof ApiMessagesDueRoute
   '/api/plus/checkout': typeof ApiPlusCheckoutRoute
+  '/api/plus/retry': typeof ApiPlusRetryRoute
   '/api/plus/status': typeof ApiPlusStatusRoute
   '/api/plus/webhook': typeof ApiPlusWebhookRoute
   '/api/reminders/due': typeof ApiRemindersDueRoute
@@ -138,6 +145,7 @@ export interface FileRoutesByTo {
   '/people/$personId': typeof PeoplePersonIdRouteWithChildren
   '/api/messages/due': typeof ApiMessagesDueRoute
   '/api/plus/checkout': typeof ApiPlusCheckoutRoute
+  '/api/plus/retry': typeof ApiPlusRetryRoute
   '/api/plus/status': typeof ApiPlusStatusRoute
   '/api/plus/webhook': typeof ApiPlusWebhookRoute
   '/api/reminders/due': typeof ApiRemindersDueRoute
@@ -157,6 +165,7 @@ export interface FileRoutesById {
   '/people/$personId': typeof PeoplePersonIdRouteWithChildren
   '/api/messages/due': typeof ApiMessagesDueRoute
   '/api/plus/checkout': typeof ApiPlusCheckoutRoute
+  '/api/plus/retry': typeof ApiPlusRetryRoute
   '/api/plus/status': typeof ApiPlusStatusRoute
   '/api/plus/webhook': typeof ApiPlusWebhookRoute
   '/api/reminders/due': typeof ApiRemindersDueRoute
@@ -177,6 +186,7 @@ export interface FileRouteTypes {
     | '/people/$personId'
     | '/api/messages/due'
     | '/api/plus/checkout'
+    | '/api/plus/retry'
     | '/api/plus/status'
     | '/api/plus/webhook'
     | '/api/reminders/due'
@@ -195,6 +205,7 @@ export interface FileRouteTypes {
     | '/people/$personId'
     | '/api/messages/due'
     | '/api/plus/checkout'
+    | '/api/plus/retry'
     | '/api/plus/status'
     | '/api/plus/webhook'
     | '/api/reminders/due'
@@ -213,6 +224,7 @@ export interface FileRouteTypes {
     | '/people/$personId'
     | '/api/messages/due'
     | '/api/plus/checkout'
+    | '/api/plus/retry'
     | '/api/plus/status'
     | '/api/plus/webhook'
     | '/api/reminders/due'
@@ -232,6 +244,7 @@ export interface RootRouteChildren {
   PeoplePersonIdRoute: typeof PeoplePersonIdRouteWithChildren
   ApiMessagesDueRoute: typeof ApiMessagesDueRoute
   ApiPlusCheckoutRoute: typeof ApiPlusCheckoutRoute
+  ApiPlusRetryRoute: typeof ApiPlusRetryRoute
   ApiPlusStatusRoute: typeof ApiPlusStatusRoute
   ApiPlusWebhookRoute: typeof ApiPlusWebhookRoute
   ApiRemindersDueRoute: typeof ApiRemindersDueRoute
@@ -323,6 +336,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPlusCheckoutRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/plus/retry': {
+      id: '/api/plus/retry'
+      path: '/api/plus/retry'
+      fullPath: '/api/plus/retry'
+      preLoaderRoute: typeof ApiPlusRetryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/plus/status': {
       id: '/api/plus/status'
       path: '/api/plus/status'
@@ -379,6 +399,7 @@ const rootRouteChildren: RootRouteChildren = {
   PeoplePersonIdRoute: PeoplePersonIdRouteWithChildren,
   ApiMessagesDueRoute: ApiMessagesDueRoute,
   ApiPlusCheckoutRoute: ApiPlusCheckoutRoute,
+  ApiPlusRetryRoute: ApiPlusRetryRoute,
   ApiPlusStatusRoute: ApiPlusStatusRoute,
   ApiPlusWebhookRoute: ApiPlusWebhookRoute,
   ApiRemindersDueRoute: ApiRemindersDueRoute,

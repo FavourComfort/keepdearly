@@ -54,6 +54,7 @@ function BuyPlus() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [reference, setReference] = useState<string | null>(null);
+  const [retrying, setRetrying] = useState(false);
 
   // Guards against setting state after unmount, and against a stale poll
   // continuing after the reference changes.
@@ -74,11 +75,28 @@ function BuyPlus() {
    *
    * This is the browser's Supabase access token, so the server can verify who is
    * asking. It is sent to our own endpoints only and is never logged.
+   *
+   * The session is revalidated here, immediately before each Plus request: the
+   * screen can still look signed in while the access token held in browser
+   * storage is stale or expired, which is what made the server answer "Sign in
+   * to buy Plus" for an apparently signed-in user.
    */
   async function authHeaders(): Promise<Record<string, string>> {
-    const { data } = await getSupabase().auth.getSession();
-    const token = data.session?.access_token;
-    return token ? { Authorization: `Bearer ${token}` } : {};
+    const supabase = getSupabase();
+
+    const { data: sessionData } = await supabase.auth.getSession();
+    const storedSession = sessionData.session;
+    // No session at all: unchanged behaviour — the request goes out without a
+    // bearer token and the server treats it as signed out.
+    if (!storedSession) return {};
+
+    // Ask Supabase for a fresh token and prefer it, falling back to the stored
+    // one only when a refresh cannot be completed (e.g. a transient network
+    // failure) — the server still verifies whichever token is sent.
+    const { data: refreshedData } = await supabase.auth.refreshSession();
+    const token = refreshedData.session?.access_token ?? storedSession.access_token;
+
+    return { Authorization: `Bearer ${token}` };
   }
 
   /*
@@ -179,6 +197,53 @@ function BuyPlus() {
       setError("We couldn't reach the payment service. Check your connection and try again.");
     } finally {
       setBusy(false);
+    }
+  }
+
+  /**
+   * Abandons an attempt the payer never got a prompt for, then returns the screen
+   * to the form so a fresh one can start. The server re-checks Nylon Pay first
+   * and never grants Plus here, so this cannot shortcut payment.
+   */
+  async function handleRetry() {
+    if (retrying || !reference) return;
+    setRetrying(true);
+    setError(null);
+
+    try {
+      const response = await fetch(`/api/plus/retry?reference=${encodeURIComponent(reference)}`, {
+        method: "POST",
+        headers: await authHeaders(),
+      });
+      const payload = (await response.json()) as PurchaseView & { error?: string };
+
+      if (!response.ok) {
+        setError(payload.error ?? "We couldn't reset that payment just now.");
+        return;
+      }
+
+      if (payload.status === "completed" && payload.plusActive) {
+        // It had actually gone through after all.
+        setStep("success");
+        refreshProfile();
+        return;
+      }
+
+      if (payload.status === "failed") {
+        // Abandoned: the form is free again, so a new attempt can start.
+        referenceRef.current = null;
+        setReference(null);
+        setStep("ready");
+        return;
+      }
+
+      // Still pending at the provider — keep waiting rather than start a second
+      // charge.
+      setStep("waiting");
+    } catch {
+      setError("We couldn't reset that payment. Check your connection and try again.");
+    } finally {
+      setRetrying(false);
     }
   }
 
@@ -361,9 +426,18 @@ function BuyPlus() {
                   <p className="text-body-sm text-on-surface-variant">
                     Checking your payment&hellip;
                   </p>
-                  <PrimaryButton variant="quiet" onClick={() => void navigate({ to: "/" })}>
-                    I&rsquo;ll come back later
-                  </PrimaryButton>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <PrimaryButton variant="quiet" onClick={() => void navigate({ to: "/" })}>
+                      I&rsquo;ll come back later
+                    </PrimaryButton>
+                    <PrimaryButton
+                      variant="quiet"
+                      onClick={() => void handleRetry()}
+                      disabled={retrying}
+                    >
+                      {retrying ? "Resetting…" : "No prompt? Start over"}
+                    </PrimaryButton>
+                  </div>
                 </div>
               ) : step === "failed" ? (
                 <div className="flex flex-col items-start gap-4" role="alert">

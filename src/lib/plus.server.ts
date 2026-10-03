@@ -162,6 +162,35 @@ function nylonPay(): NylonPaySdk {
 }
 
 /**
+ * True when this deployment talks to Nylon Pay's sandbox.
+ *
+ * Test vs live is decided by the API key itself -- there is no environment flag
+ * -- so the key prefix is the one authoritative signal. Only a key we are
+ * certain is a test key is treated as sandbox.
+ */
+function isSandboxMode(): boolean {
+  const apiKey = serverEnv("NYLONPAY_API_KEY");
+  return typeof apiKey === "string" && apiKey.startsWith("npk_test_");
+}
+
+/**
+ * The sandbox-only forced outcome for a collection, or `undefined` for live keys.
+ *
+ * Sandbox collections are simulated: nothing is pushed to the payer's phone, so
+ * without a forced outcome the attempt can sit pending and the purchase screen
+ * waits forever. `testOutcome` makes the sandbox finish deterministically so the
+ * one-time flow can be exercised end to end. Defaults to `"success"`; set
+ * `NYLONPAY_TEST_OUTCOME=fail` to walk the failure screen instead.
+ *
+ * Never returned for a live key: Nylon Pay rejects `testOutcome` there, and a
+ * real charge must always follow the payer's own approval on their phone.
+ */
+function sandboxTestOutcome(): "success" | "fail" | undefined {
+  if (!isSandboxMode()) return undefined;
+  return serverEnv("NYLONPAY_TEST_OUTCOME") === "fail" ? "fail" : "success";
+}
+
+/**
  * Normalises a Ugandan Mobile Money number to the international form Nylon Pay
  * documents (+2567XXXXXXXX).
  *
@@ -399,6 +428,7 @@ export async function startPlusPurchase(
   }
 
   const accountName = await readDisplayName(userId);
+  const testOutcome = sandboxTestOutcome();
 
   try {
     // Throws only on client-side validation problems; a server-side rejection
@@ -412,6 +442,9 @@ export async function startPlusPurchase(
       reference,
       // Reconciliation only. Nothing here is ever used to decide who gets Plus.
       metadata: { source: "keepdearly-plus" },
+      // Sandbox only (never sent with a live key): force a terminal result,
+      // because a sandbox collection never sends a prompt the payer can approve.
+      ...(testOutcome ? { testOutcome } : {}),
     });
 
     // Initiation rejections (auth, limits, provider down, network) arrive here
@@ -515,6 +548,65 @@ export async function confirmPlusPurchase(
     transactionId: transaction?.id ?? null,
     failureReason: transaction?.failureReason ?? null,
   });
+}
+
+/**
+ * Abandons an attempt the payer never received a prompt for, so they can start a
+ * fresh one.
+ *
+ * The purchase screen offers this only while it is waiting on a payment the
+ * payer does not believe reached their phone. It is deliberately conservative:
+ *
+ *  - It reuses `confirmPlusPurchase` first, so every existing safeguard applies
+ *    unchanged: the caller is authenticated, the reference must belong to them,
+ *    the amount and currency are re-verified against Nylon Pay, and Plus is
+ *    granted ONLY by `complete_plus_purchase` on a verified success.
+ *  - A genuinely successful attempt is kept and completed, never discarded.
+ *  - A live attempt Nylon Pay still reports as pending is NOT abandoned: the
+ *    payer may yet approve the prompt, and abandoning it could lead to a second
+ *    charge. The screen simply keeps waiting.
+ *  - Only a sandbox attempt is abandoned while still pending, because a sandbox
+ *    collection never pushes a prompt and can never move real money. The row is
+ *    moved with `fail_plus_purchase`, which only ever moves pending -> failed and
+ *    never touches `plus_active`.
+ */
+export async function retryPlusPurchase(
+  request: Request,
+  reference: string,
+): Promise<PlusPurchaseView> {
+  // Authoritative read + record first: a real success is completed, a real
+  // failure is recorded, and a bad or someone else's reference still fails closed.
+  const view = await confirmPlusPurchase(request, reference);
+
+  // A terminal outcome already says everything the screen needs.
+  if (view.status !== "pending") return view;
+
+  // Still pending at Nylon Pay. A live attempt may yet be approved on the
+  // payer's phone, so it is left exactly as it is; only a sandbox attempt is
+  // safe to abandon.
+  if (!isSandboxMode()) return view;
+
+  const userId = await requireUserId(request);
+  const { error } = await serviceClient().rpc("fail_plus_purchase", {
+    p_reference: reference,
+    p_failure_reason: "abandoned_sandbox",
+  });
+
+  if (error) {
+    console.error("Could not reset the sandbox Plus purchase:", {
+      reason: "failure_record_failed",
+    });
+    throw new PlusPaymentError("We couldn't reset that payment just now.", "provider_error");
+  }
+
+  // The row is now failed, so the normal checkout can create a fresh attempt.
+  return {
+    reference,
+    status: "failed",
+    amount: PLUS_PRICE_UGX,
+    currency: PLUS_CURRENCY,
+    plusActive: await readPlusActive(userId),
+  };
 }
 
 /**
