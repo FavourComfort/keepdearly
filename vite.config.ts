@@ -12,4 +12,8 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  // Pin Vercel so process.env secrets work in production (Lovable defaults to cloudflare-module).
+  nitro: {
+    preset: "vercel",
+  },
 });
