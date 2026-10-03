@@ -26,7 +26,11 @@ export function MemoryCard({ memory }: { memory: Memory }) {
   );
 
   return (
-    <article className="flex flex-col gap-1 rounded-xl bg-surface-container-lowest p-4 shadow-sm transition-all duration-200 hover:shadow-md sm:p-6">
+    <article className="relative flex flex-col gap-1 overflow-hidden rounded-2xl border border-outline-variant/30 bg-surface-container-lowest p-4 shadow-[0_2px_12px_rgba(72,47,35,0.04)] transition-shadow duration-200 hover:shadow-md sm:p-6">
+      <div
+        aria-hidden="true"
+        className={cn("absolute bottom-4 left-0 top-4 w-1 rounded-r-full", accentTone[memory.tone])}
+      />
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           {memory.personId ? (

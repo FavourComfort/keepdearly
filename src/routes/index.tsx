@@ -39,15 +39,15 @@ function Home() {
   return (
     <RequireAuth>
       <AppShell>
-        <section className="flex flex-col items-center gap-4 pt-10 text-center">
+        <section className="flex flex-col items-center gap-3 pt-8 text-center sm:pt-10">
           <span className="inline-flex items-center gap-2 rounded-full bg-primary-fixed px-4 py-1 text-label-sm text-on-primary-fixed-variant">
             <Icon name="favorite" filled className="text-[14px]" />
             the little things that actually matter
           </span>
-          <h1 className="max-w-xl text-headline-xl leading-tight text-on-surface">
+          <h1 className="max-w-xl text-headline-lg leading-tight text-on-surface">
             Know something today that&rsquo;s worth remembering later?
           </h1>
-          <p className="max-w-md text-body-lg text-on-surface-variant">
+          <p className="max-w-md text-body-md text-on-surface-variant">
             Keep it here while it&rsquo;s fresh. We&rsquo;ll hand it back to you at the right
             moment.
           </p>
@@ -58,6 +58,13 @@ function Home() {
             <Icon name="edit" className="text-[18px]" />
             Keep a memory
           </Link>
+          <Link
+            to="/plus"
+            className="inline-flex items-center gap-2 text-label-md font-medium text-primary transition-colors hover:text-primary/80"
+          >
+            <Icon name="workspace_premium" className="text-[16px]" />
+            KeepDearly Plus — UGX 2,000
+          </Link>
         </section>
 
         {loading ? (
@@ -66,28 +73,22 @@ function Home() {
           <DataError />
         ) : (
           <>
-            <section className="mt-14 flex flex-col gap-4">
-              <div className="flex items-baseline justify-between">
-                <h2 className="text-headline-sm text-on-surface">Coming up</h2>
-                <Link to="/reminders" className="text-label-md text-primary hover:underline">
-                  See all reminders
-                </Link>
-              </div>
-              {upcoming.length ? (
-                <div className="grid gap-4 sm:grid-cols-2">
-                  {upcoming.map((reminder) => (
-                    <ReminderCard key={reminder.id} reminder={reminder} />
+            <section className="mt-10 flex flex-col gap-4 sm:mt-12">
+              <h2 className="text-headline-sm text-on-surface">Recently kept</h2>
+              {memories.length ? (
+                <div className="flex flex-col gap-3 sm:gap-4">
+                  {memories.slice(0, 4).map((memory) => (
+                    <MemoryCard key={memory.id} memory={memory} />
                   ))}
                 </div>
               ) : (
                 <DataEmpty>
-                  Nothing scheduled yet. Keep a memory, choose a nudge, and it will wait for you
-                  here.
+                  Nothing kept yet. Capture the first small thing someone tells you.
                 </DataEmpty>
               )}
             </section>
 
-            <section className="mt-14 flex flex-col gap-4">
+            <section className="mt-10 flex flex-col gap-4 sm:mt-12">
               <h2 className="text-headline-sm text-on-surface">People you keep close</h2>
               {people.length ? (
                 <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
@@ -106,17 +107,23 @@ function Home() {
               )}
             </section>
 
-            <section className="mt-14 flex flex-col gap-4">
-              <h2 className="text-headline-sm text-on-surface">Recently kept</h2>
-              {memories.length ? (
-                <div className="flex flex-col gap-4">
-                  {memories.slice(0, 4).map((memory) => (
-                    <MemoryCard key={memory.id} memory={memory} />
+            <section className="mt-10 flex flex-col gap-4 sm:mt-12">
+              <div className="flex items-baseline justify-between">
+                <h2 className="text-headline-sm text-on-surface">Coming up</h2>
+                <Link to="/reminders" className="text-label-md text-primary hover:underline">
+                  See all reminders
+                </Link>
+              </div>
+              {upcoming.length ? (
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {upcoming.map((reminder) => (
+                    <ReminderCard key={reminder.id} reminder={reminder} />
                   ))}
                 </div>
               ) : (
                 <DataEmpty>
-                  Nothing kept yet. Capture the first small thing someone tells you.
+                  Nothing scheduled yet. Keep a memory, choose a nudge, and it will wait for you
+                  here.
                 </DataEmpty>
               )}
             </section>

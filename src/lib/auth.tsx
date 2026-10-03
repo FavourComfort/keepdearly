@@ -48,6 +48,15 @@ type AuthStore = {
   signOut: () => Promise<AuthResult>;
   requestPasswordReset: (email: string) => Promise<AuthResult>;
   updatePassword: (password: string) => Promise<AuthResult>;
+  /**
+   * Phase 6D: re-read this user's own profile from the database.
+   *
+   * Needed after a Plus purchase, because `plus_active` is set by the server
+   * rather than by anything the browser does. Without this, the Plus gate would
+   * keep reading the flag as it was loaded at sign-in and the user would appear
+   * not to have paid.
+   */
+  refreshProfile: () => void;
 };
 
 const AuthContext = createContext<AuthStore | null>(null);
@@ -76,6 +85,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
+
+  // Bumped by refreshProfile() to re-run the profile effect below. Phase 6D only:
+  // it lets the app pick up a server-set plus_active without a full reload.
+  const [profileReload, setProfileReload] = useState(0);
+  const refreshProfile = useCallback(() => setProfileReload((count) => count + 1), []);
   const isConfigured = isSupabaseConfigured;
 
   // Restore the session on load and keep it in sync with Supabase's auth events.
@@ -145,7 +159,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [user?.id]);
+  }, [user?.id, profileReload]);
 
   const signUp = useCallback(async ({ email, password, fullName }: SignUpInput) => {
     try {
@@ -218,6 +232,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signOut,
       requestPasswordReset,
       updatePassword,
+      refreshProfile,
     }),
     [
       status,
@@ -230,6 +245,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signOut,
       requestPasswordReset,
       updatePassword,
+      refreshProfile,
     ],
   );
 

@@ -85,7 +85,7 @@ export type DailyNudgeRunResult = {
 };
 
 /** Notification copy: generic and warm, with no personal content at all. */
-const NUDGE_TITLE = "Know something worth remembering?";
+const NUDGE_TITLE = "Known something today worth remembering later?";
 
 /** Notification copy: the reason to act now, before the moment is gone. */
 const NUDGE_BODY = "Capture a little memory before it slips away.";

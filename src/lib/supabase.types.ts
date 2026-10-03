@@ -102,6 +102,34 @@ export type ReminderRow = {
 };
 
 /**
+ * A row of `public.plus_purchases` (Phase 6D).
+ *
+ * One KeepDearly-initiated Nylon Pay attempt for Plus: UGX 2,000, paid once.
+ * Readable by its owner for status history, and writable by nobody on the client
+ * — `authenticated` holds SELECT only, so every field here is set server-side.
+ */
+export type PlusPurchaseRow = {
+  id: string;
+  user_id: string;
+  provider: string;
+  provider_reference: string;
+  provider_transaction_id: string | null;
+  /** Always 2000 for Plus. CHECK-constrained in the database, not by the client. */
+  amount: number;
+  currency: string;
+  status: PlusPurchaseStatus;
+  /** Kept for reconciliation only; never logged and never sent to the browser. */
+  payer_phone: string | null;
+  /** A short category only — never raw provider error text. */
+  failure_reason: string | null;
+  completed_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type PlusPurchaseStatus = "pending" | "completed" | "failed";
+
+/**
  * Hand-written shape of the Supabase generated database types, kept in step
  * with supabase/migrations by hand. Regenerate with
  * `npx supabase gen types typescript` once the project has a CLI link.
@@ -219,9 +247,43 @@ export type Database = {
           updated_at?: string;
         };
         Update: {
-          // Only what the owner may legitimately change. Cancelling moves
-          // status; the body and moment stay as the user wrote them.
+          // `status` is the only field the Phase 6B client writes, when the
+          // owner cancels a pending message.
           status?: ScheduledMessageRow["status"];
+          // Server-only (Phase 6C delivery job). The browser has no code path
+          // that writes these; see the report note on the residual risk that
+          // these are still reachable through PostgREST by the row owner.
+          sent_at?: string | null;
+          last_error?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      plus_purchases: {
+        Row: PlusPurchaseRow;
+        Insert: {
+          // Server-only. The client has SELECT on this table and nothing else, so
+          // these Insert/Update shapes exist for the service-role client and are
+          // never reachable from a browser.
+          id?: string;
+          user_id: string;
+          provider?: string;
+          provider_reference: string;
+          provider_transaction_id?: string | null;
+          amount: number;
+          currency: string;
+          status?: PlusPurchaseStatus;
+          payer_phone?: string | null;
+          failure_reason?: string | null;
+          completed_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          provider_transaction_id?: string | null;
+          status?: PlusPurchaseStatus;
+          failure_reason?: string | null;
+          completed_at?: string | null;
           updated_at?: string;
         };
         Relationships: [];
@@ -242,6 +304,53 @@ export type Database = {
           user_id: string;
           memory_id: string;
           remind_at: string;
+        }[];
+      };
+      /**
+       * Phase 6C (migration 0010): cancel one of the calling user's own
+       * PENDING scheduled messages. SECURITY DEFINER; ownership is enforced in
+       * the function with `auth.uid()`, which is why `authenticated` has no
+       * UPDATE privilege on this table at all.
+       *
+       * Returns one row on success. Raises `P0002` when there is nothing to
+       * cancel (not the caller's message, or it has already been claimed or
+       * delivered) — deliberately without saying which, so the function cannot
+       * be used to probe other users' message ids.
+       */
+      cancel_scheduled_message: {
+        Args: { p_message_id: string };
+        Returns: {
+          id: string;
+          person_id: string;
+          status: string;
+        }[];
+      };
+      /**
+       * Phase 6D: record a VERIFIED successful Plus payment and set
+       * `profiles.plus_active` for the purchase's own user.
+       *
+       * The user id is derived from the purchase row, never from an argument, so
+       * a caller cannot choose the account that gets Plus. Idempotent:
+       * `out_activated` is false when the purchase was already completed, which
+       * is what a duplicate webhook sees. service_role only.
+       */
+      complete_plus_purchase: {
+        Args: { p_reference: string; p_provider_transaction_id: string | null };
+        Returns: {
+          out_user_id: string;
+          out_activated: boolean;
+        }[];
+      };
+      /**
+       * Phase 6D: record a terminal Plus payment failure as a short category.
+       * Never grants Plus and never downgrades a completed purchase. service_role
+       * only.
+       */
+      fail_plus_purchase: {
+        Args: { p_reference: string; p_failure_reason: string | null };
+        Returns: {
+          out_user_id: string;
+          out_recorded: boolean;
         }[];
       };
     };

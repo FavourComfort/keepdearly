@@ -13,11 +13,16 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as CaptureRouteImport } from './routes/capture'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as PlusRouteImport } from './routes/plus'
 import { Route as RemindersRouteImport } from './routes/reminders'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as ApiDailyNudgeRouteImport } from './routes/api.daily-nudge'
 import { Route as PeoplePersonIdRouteImport } from './routes/people.$personId'
+import { Route as ApiMessagesDueRouteImport } from './routes/api.messages.due'
+import { Route as ApiPlusCheckoutRouteImport } from './routes/api.plus.checkout'
+import { Route as ApiPlusStatusRouteImport } from './routes/api.plus.status'
+import { Route as ApiPlusWebhookRouteImport } from './routes/api.plus.webhook'
 import { Route as ApiRemindersDueRouteImport } from './routes/api.reminders.due'
 import { Route as PeoplePersonIdMessageRouteImport } from './routes/people.$personId.message'
 
@@ -39,6 +44,11 @@ const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PlusRoute = PlusRouteImport.update({
+  id: '/plus',
+  path: '/plus',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RemindersRoute = RemindersRouteImport.update({
@@ -66,6 +76,26 @@ const PeoplePersonIdRoute = PeoplePersonIdRouteImport.update({
   path: '/people/$personId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiMessagesDueRoute = ApiMessagesDueRouteImport.update({
+  id: '/api/messages/due',
+  path: '/api/messages/due',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPlusCheckoutRoute = ApiPlusCheckoutRouteImport.update({
+  id: '/api/plus/checkout',
+  path: '/api/plus/checkout',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPlusStatusRoute = ApiPlusStatusRouteImport.update({
+  id: '/api/plus/status',
+  path: '/api/plus/status',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPlusWebhookRoute = ApiPlusWebhookRouteImport.update({
+  id: '/api/plus/webhook',
+  path: '/api/plus/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiRemindersDueRoute = ApiRemindersDueRouteImport.update({
   id: '/api/reminders/due',
   path: '/api/reminders/due',
@@ -82,11 +112,16 @@ export interface FileRoutesByFullPath {
   '/capture': typeof CaptureRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
+  '/plus': typeof PlusRoute
   '/reminders': typeof RemindersRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/api/daily-nudge': typeof ApiDailyNudgeRoute
   '/people/$personId': typeof PeoplePersonIdRouteWithChildren
+  '/api/messages/due': typeof ApiMessagesDueRoute
+  '/api/plus/checkout': typeof ApiPlusCheckoutRoute
+  '/api/plus/status': typeof ApiPlusStatusRoute
+  '/api/plus/webhook': typeof ApiPlusWebhookRoute
   '/api/reminders/due': typeof ApiRemindersDueRoute
   '/people/$personId/message': typeof PeoplePersonIdMessageRoute
 }
@@ -95,11 +130,16 @@ export interface FileRoutesByTo {
   '/capture': typeof CaptureRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
+  '/plus': typeof PlusRoute
   '/reminders': typeof RemindersRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/api/daily-nudge': typeof ApiDailyNudgeRoute
   '/people/$personId': typeof PeoplePersonIdRouteWithChildren
+  '/api/messages/due': typeof ApiMessagesDueRoute
+  '/api/plus/checkout': typeof ApiPlusCheckoutRoute
+  '/api/plus/status': typeof ApiPlusStatusRoute
+  '/api/plus/webhook': typeof ApiPlusWebhookRoute
   '/api/reminders/due': typeof ApiRemindersDueRoute
   '/people/$personId/message': typeof PeoplePersonIdMessageRoute
 }
@@ -109,11 +149,16 @@ export interface FileRoutesById {
   '/capture': typeof CaptureRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
+  '/plus': typeof PlusRoute
   '/reminders': typeof RemindersRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/api/daily-nudge': typeof ApiDailyNudgeRoute
   '/people/$personId': typeof PeoplePersonIdRouteWithChildren
+  '/api/messages/due': typeof ApiMessagesDueRoute
+  '/api/plus/checkout': typeof ApiPlusCheckoutRoute
+  '/api/plus/status': typeof ApiPlusStatusRoute
+  '/api/plus/webhook': typeof ApiPlusWebhookRoute
   '/api/reminders/due': typeof ApiRemindersDueRoute
   '/people/$personId/message': typeof PeoplePersonIdMessageRoute
 }
@@ -124,11 +169,16 @@ export interface FileRouteTypes {
     | '/capture'
     | '/forgot-password'
     | '/login'
+    | '/plus'
     | '/reminders'
     | '/reset-password'
     | '/signup'
     | '/api/daily-nudge'
     | '/people/$personId'
+    | '/api/messages/due'
+    | '/api/plus/checkout'
+    | '/api/plus/status'
+    | '/api/plus/webhook'
     | '/api/reminders/due'
     | '/people/$personId/message'
   fileRoutesByTo: FileRoutesByTo
@@ -137,11 +187,16 @@ export interface FileRouteTypes {
     | '/capture'
     | '/forgot-password'
     | '/login'
+    | '/plus'
     | '/reminders'
     | '/reset-password'
     | '/signup'
     | '/api/daily-nudge'
     | '/people/$personId'
+    | '/api/messages/due'
+    | '/api/plus/checkout'
+    | '/api/plus/status'
+    | '/api/plus/webhook'
     | '/api/reminders/due'
     | '/people/$personId/message'
   id:
@@ -150,11 +205,16 @@ export interface FileRouteTypes {
     | '/capture'
     | '/forgot-password'
     | '/login'
+    | '/plus'
     | '/reminders'
     | '/reset-password'
     | '/signup'
     | '/api/daily-nudge'
     | '/people/$personId'
+    | '/api/messages/due'
+    | '/api/plus/checkout'
+    | '/api/plus/status'
+    | '/api/plus/webhook'
     | '/api/reminders/due'
     | '/people/$personId/message'
   fileRoutesById: FileRoutesById
@@ -164,11 +224,16 @@ export interface RootRouteChildren {
   CaptureRoute: typeof CaptureRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   LoginRoute: typeof LoginRoute
+  PlusRoute: typeof PlusRoute
   RemindersRoute: typeof RemindersRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SignupRoute: typeof SignupRoute
   ApiDailyNudgeRoute: typeof ApiDailyNudgeRoute
   PeoplePersonIdRoute: typeof PeoplePersonIdRouteWithChildren
+  ApiMessagesDueRoute: typeof ApiMessagesDueRoute
+  ApiPlusCheckoutRoute: typeof ApiPlusCheckoutRoute
+  ApiPlusStatusRoute: typeof ApiPlusStatusRoute
+  ApiPlusWebhookRoute: typeof ApiPlusWebhookRoute
   ApiRemindersDueRoute: typeof ApiRemindersDueRoute
 }
 
@@ -200,6 +265,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/plus': {
+      id: '/plus'
+      path: '/plus'
+      fullPath: '/plus'
+      preLoaderRoute: typeof PlusRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reminders': {
@@ -237,6 +309,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PeoplePersonIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/messages/due': {
+      id: '/api/messages/due'
+      path: '/api/messages/due'
+      fullPath: '/api/messages/due'
+      preLoaderRoute: typeof ApiMessagesDueRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/plus/checkout': {
+      id: '/api/plus/checkout'
+      path: '/api/plus/checkout'
+      fullPath: '/api/plus/checkout'
+      preLoaderRoute: typeof ApiPlusCheckoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/plus/status': {
+      id: '/api/plus/status'
+      path: '/api/plus/status'
+      fullPath: '/api/plus/status'
+      preLoaderRoute: typeof ApiPlusStatusRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/plus/webhook': {
+      id: '/api/plus/webhook'
+      path: '/api/plus/webhook'
+      fullPath: '/api/plus/webhook'
+      preLoaderRoute: typeof ApiPlusWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/reminders/due': {
       id: '/api/reminders/due'
       path: '/api/reminders/due'
@@ -271,11 +371,16 @@ const rootRouteChildren: RootRouteChildren = {
   CaptureRoute: CaptureRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
   LoginRoute: LoginRoute,
+  PlusRoute: PlusRoute,
   RemindersRoute: RemindersRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SignupRoute: SignupRoute,
   ApiDailyNudgeRoute: ApiDailyNudgeRoute,
   PeoplePersonIdRoute: PeoplePersonIdRouteWithChildren,
+  ApiMessagesDueRoute: ApiMessagesDueRoute,
+  ApiPlusCheckoutRoute: ApiPlusCheckoutRoute,
+  ApiPlusStatusRoute: ApiPlusStatusRoute,
+  ApiPlusWebhookRoute: ApiPlusWebhookRoute,
   ApiRemindersDueRoute: ApiRemindersDueRoute,
 }
 export const routeTree = rootRouteImport

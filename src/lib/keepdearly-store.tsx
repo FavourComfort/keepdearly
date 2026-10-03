@@ -350,23 +350,25 @@ export function KeepDearlyProvider({ children }: { children: ReactNode }) {
 
   // Cancelling is a soft delete: the row is kept with status 'cancelled' so the
   // history stays honest, and so a delivery job mid-run cannot race it away.
+  //
+  // This calls the cancel_scheduled_message RPC rather than updating the row
+  // directly. Migration 0010 revoked UPDATE on scheduled_messages from
+  // `authenticated`, because row-scoped RLS could not stop a user forging
+  // delivery state on their own row (status='sent', sent_at, attempts, ...).
+  // The RPC is the only path a signed-in user has to change a row, and it will
+  // only ever move 'pending' => 'cancelled'.
   const cancelScheduledMessage = useCallback(
     async (id: string): Promise<ScheduledMessageActionResult> => {
-      const { error } = await getSupabase()
-        .from("scheduled_messages")
-        .update({ status: "cancelled" })
-        .eq("id", id)
-        .eq("user_id", userId ?? "")
-        // Only a message that has not gone out can be withdrawn. A sent one is
-        // left exactly as it is, which is why the button is hidden for those.
-        .eq("status", "pending");
+      const { error } = await getSupabase().rpc("cancel_scheduled_message", {
+        p_message_id: id,
+      });
       if (error) {
         console.error("Could not cancel scheduled message:", error.message);
         return { ok: false, error: CANCEL_ERROR };
       }
       return { ok: true, error: null };
     },
-    [userId],
+    [],
   );
 
   const saveMemory = useCallback(

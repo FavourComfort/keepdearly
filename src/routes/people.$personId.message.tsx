@@ -103,10 +103,19 @@ function ScheduleMessage() {
               Write the message now and let it arrive on the day, without having to remember. That
               comes with Plus.
             </p>
+            {/* Phase 6D: the real purchase route. The gate itself is unchanged —
+                this only adds the action that pays for Plus. */}
+            <PrimaryButton
+              variant="primary"
+              onClick={() => void navigate({ to: "/plus" })}
+              className="mt-2"
+            >
+              Get Plus — UGX 2,000
+            </PrimaryButton>
             <button
               type="button"
               onClick={() => void navigate({ to: "/people/$personId", params: { personId } })}
-              className="mt-2 inline-flex items-center gap-2 rounded-full bg-surface-container px-6 py-2.5 text-label-md text-on-surface transition-colors hover:bg-surface-container-high"
+              className="inline-flex items-center gap-2 rounded-full bg-surface-container px-6 py-2.5 text-label-md text-on-surface transition-colors hover:bg-surface-container-high"
             >
               Back to {person.name}
             </button>
