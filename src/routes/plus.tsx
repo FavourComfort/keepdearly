@@ -237,7 +237,7 @@ function BuyPlus() {
                   <Icon name="cake" className="text-[20px]" />
                 </span>
                 <div>
-                  <p className="text-title-sm text-on-surface">Sarah&rsquo;s birthday</p>
+                  <p className="text-title-sm text-on-surface">Bestie&rsquo;s birthday</p>
                   <p className="text-body-sm text-on-surface-variant">October 18</p>
                 </div>
               </div>
@@ -247,7 +247,7 @@ function BuyPlus() {
             </div>
 
             <p className="mt-6 whitespace-pre-line text-quote-body leading-relaxed text-on-surface">
-              Happy birthday, Sarah. I hope this year brings you everything you&rsquo;re hoping
+              Happy birthday dear, Bestie. I hope this year brings you everything you&rsquo;re hoping
               for&hellip;
             </p>
 
