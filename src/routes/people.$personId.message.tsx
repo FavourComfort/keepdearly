@@ -7,6 +7,7 @@ import { AppShell } from "@/components/keepdearly/AppShell";
 import { DataLoading, DataNotice } from "@/components/keepdearly/DataState";
 import { Icon } from "@/components/keepdearly/Icon";
 import { PrimaryButton } from "@/components/keepdearly/PrimaryButton";
+import { TimePicker } from "@/components/keepdearly/TimePicker";
 import { isFutureMoment, remindAtForChosenDate, todayDateInputValue } from "@/lib/keepdearly-data";
 import { useKeepDearly } from "@/lib/keepdearly-store";
 
@@ -187,12 +188,11 @@ function ScheduleMessage() {
                 <label htmlFor="send-time" className="text-label-sm text-on-surface-variant">
                   Time
                 </label>
-                <input
+                <TimePicker
                   id="send-time"
-                  type="time"
                   value={time}
-                  onChange={(event) => setTime(event.target.value)}
-                  className="rounded-full bg-surface-container-low px-4 py-2 text-body-md text-on-surface outline-none focus:ring-1 focus:ring-primary/40"
+                  onChange={setTime}
+                  className="rounded-full bg-surface-container-low px-4 py-2 text-body-md"
                 />
               </div>
             </div>

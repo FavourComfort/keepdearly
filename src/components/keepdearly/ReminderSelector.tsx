@@ -1,16 +1,17 @@
 import { reminderOptions, todayDateInputValue } from "@/lib/keepdearly-data";
 import { Icon } from "./Icon";
+import { TimePicker } from "./TimePicker";
 import { cn } from "@/lib/utils";
 
 /**
  * The nudge picker.
  *
  * "Choose date" is no longer a dead option: picking it reveals a plain date
- * input and an optional time input right here, in the same card language as the
- * rest of the screen. No calendar, no month grid — just the two fields a person
- * needs to name a moment.
+ * input and an optional time picker right here, in the same card language as
+ * the rest of the screen. No calendar, no month grid — just the two fields a
+ * person needs to name a moment.
  *
- * The time is optional on purpose. Left empty it falls back to the app's
+ * The time stays optional on purpose. Left unset it falls back to the app's
  * existing 9:00 AM convention, which is what the relative options already use.
  */
 export function ReminderSelector({
@@ -86,12 +87,11 @@ export function ReminderSelector({
               <Icon name="schedule" className="text-[16px]" />
               What time? (optional)
             </label>
-            <input
+            <TimePicker
               id="reminder-time"
-              type="time"
-              value={time ?? ""}
-              onChange={(e) => onTimeChange?.(e.target.value)}
-              className="rounded-lg bg-surface-container-lowest px-3 py-2 text-body-md text-on-surface shadow-sm outline-none focus:ring-2 focus:ring-primary/30"
+              value={time}
+              onChange={(next) => onTimeChange?.(next)}
+              className="text-body-md"
             />
           </div>
         </div>

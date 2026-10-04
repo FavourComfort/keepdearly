@@ -135,17 +135,21 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       <BottomNavigation />
 
-      <footer className="mt-14 w-full bg-surface-container-low py-9 pb-[calc(7rem+env(safe-area-inset-bottom))] md:pb-9">
-        <div className="mx-auto flex max-w-3xl flex-col items-center justify-between gap-4 px-4 text-center sm:flex-row sm:text-left">
+      <footer className="mt-14 w-full px-4 py-9 pb-[calc(7rem+env(safe-area-inset-bottom))] md:pb-9">
+        {/* The closing card: a small, calm dark panel that ends the page. It
+            reuses the palette's inverse-surface / inverse-on-surface /
+            inverse-primary tokens so it stays in-family with the warm light
+            app above it — a deep warm charcoal, never a cold black box. */}
+        <div className="mx-auto flex max-w-3xl flex-col items-center justify-between gap-4 rounded-2xl bg-inverse-surface px-6 py-7 text-center sm:flex-row sm:items-start sm:px-8 sm:text-left">
           <div className="flex flex-col gap-1">
-            <span className="text-headline-sm lowercase text-primary">keepdearly</span>
-            <p className="text-body-sm text-on-surface-variant">
+            <span className="text-headline-sm lowercase text-inverse-primary">keepdearly</span>
+            <p className="text-body-sm text-inverse-on-surface/80">
               A quiet sanctuary for beloved memories and small tokens of tenderness.
             </p>
           </div>
           <div className="flex flex-col items-center gap-2 sm:items-end">
             <PushOptIn />
-            <span className="text-label-sm text-on-surface-variant">
+            <span className="text-label-sm text-inverse-on-surface/70">
               © 2026 keepdearly. Gentle &amp; discreet.
             </span>
           </div>

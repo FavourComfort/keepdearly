@@ -13,7 +13,10 @@ import { Icon } from "./Icon";
 /**
  * A small, quiet footer control for web push notifications.
  *
- * Keeps visual weight minimal and aesthetic aligned with KeepDearly:
+ * It lives inside the dark closing card, so every colour comes from the
+ * palette's `inverse-*` tokens rather than the light-surface ones — the same
+ * warm off-white, muted warm-gray and soft terracotta as the card around it.
+ * Visual weight stays minimal and aesthetic aligned with KeepDearly:
  * - AVAILABLE / OFF: [bell icon] Quiet nudges · Turn on
  * - ENABLED:         [active bell icon] Quiet nudges · Turn off
  * - DENIED:          [muted bell icon] Quiet nudges · Blocked
@@ -68,11 +71,11 @@ export function PushOptIn() {
     <div className="flex flex-col items-center gap-1 sm:items-end">
       {status === "denied" ? (
         <span
-          className="inline-flex items-center gap-1.5 text-label-sm text-on-surface-variant select-none"
+          className="inline-flex items-center gap-1.5 text-label-sm text-inverse-on-surface/70 select-none"
           title="Notifications are blocked in your browser settings"
           aria-label="Quiet nudges are blocked in this browser's settings"
         >
-          <Icon name="notifications_off" className="text-[16px] text-outline" />
+          <Icon name="notifications_off" className="text-[16px] text-inverse-on-surface/50" />
           <span>Quiet nudges · Blocked</span>
         </span>
       ) : (
@@ -92,14 +95,14 @@ export function PushOptIn() {
                 ? "Quiet nudges are on. Click to turn off."
                 : "Quiet nudges are off. Click to turn on."
           }
-          className="group inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-label-sm text-on-surface-variant transition-colors hover:text-on-surface hover:bg-surface-container focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/40 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+          className="group inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-label-sm text-inverse-on-surface/70 transition-colors hover:text-inverse-on-surface hover:bg-inverse-on-surface/10 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inverse-primary/60 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
         >
           <Icon
             name={status === "enabled" ? "notifications_active" : "notifications"}
             className={
               status === "enabled"
-                ? "text-[16px] text-primary"
-                : "text-[16px] text-outline transition-colors group-hover:text-on-surface"
+                ? "text-[16px] text-inverse-primary"
+                : "text-[16px] text-inverse-on-surface/50 transition-colors group-hover:text-inverse-on-surface"
             }
           />
           <span>

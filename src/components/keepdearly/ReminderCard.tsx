@@ -5,6 +5,7 @@ import { isFutureMoment, remindAtForChosenDate, todayDateInputValue } from "@/li
 import { useKeepDearly } from "@/lib/keepdearly-store";
 import { DataNotice } from "./DataState";
 import { Icon } from "./Icon";
+import { TimePicker } from "./TimePicker";
 import { cn } from "@/lib/utils";
 
 const chipTone: Record<Tone, string> = {
@@ -84,12 +85,11 @@ export function ReminderActions({ reminder }: { reminder: Reminder }) {
           <label className="sr-only" htmlFor={`reschedule-time-${reminder.id}`}>
             New time, optional
           </label>
-          <input
+          <TimePicker
             id={`reschedule-time-${reminder.id}`}
-            type="time"
             value={time}
-            onChange={(e) => setTime(e.target.value)}
-            className="rounded-lg bg-surface-container-lowest px-3 py-1.5 text-body-sm text-on-surface shadow-sm outline-none focus:ring-2 focus:ring-primary/30"
+            onChange={setTime}
+            className="w-auto py-1.5 text-body-sm"
           />
           <button
             type="button"
