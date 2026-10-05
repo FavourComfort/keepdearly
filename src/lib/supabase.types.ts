@@ -58,13 +58,15 @@ export type ScheduledMessageRow = {
 
 /**
  * A row of `public.memories`. `person_id` is nullable by design — a memory may
- * be captured before anyone is attached to it.
+ * be captured before anyone is attached to it. `photo_path` is the private
+ * storage object path of the one optional photo; null means text only.
  */
 export type MemoryRow = {
   id: string;
   user_id: string;
   person_id: string | null;
   content: string;
+  photo_path: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -179,12 +181,15 @@ export type Database = {
           user_id: string;
           person_id?: string | null;
           content: string;
+          /** Private storage path under this memory's owner folder; null = no photo. */
+          photo_path?: string | null;
           created_at?: string;
           updated_at?: string;
         };
         Update: {
           person_id?: string | null;
           content?: string;
+          photo_path?: string | null;
           updated_at?: string;
         };
         Relationships: [];

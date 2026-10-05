@@ -186,7 +186,9 @@ function PersonProfile() {
           <section className="flex flex-col gap-4">
             <h2 className="text-headline-sm text-on-surface">Little things you&rsquo;ve kept</h2>
             {personMemories.length ? (
-              <div className="flex flex-col gap-4">
+              // The same compact collection rhythm as Home: one column on a
+              // phone, widening to two and then three. No more one-big-card-per-row.
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {personMemories.map((memory) => (
                   <MemoryNote key={memory.id} memory={memory} />
                 ))}

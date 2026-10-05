@@ -1,40 +1,62 @@
 import { Link } from "@tanstack/react-router";
-import type { Person, Tone } from "@/lib/keepdearly-data";
+import type { Person } from "@/lib/keepdearly-data";
 import { PersonAvatar } from "./PersonAvatar";
 import { cn } from "@/lib/utils";
 
-const countTone: Record<Tone, string> = {
-  primary: "text-primary",
-  secondary: "text-secondary",
-  tertiary: "text-tertiary",
-  neutral: "text-on-surface-variant",
-};
+/**
+ * How a person appears.
+ *
+ * `rail`   — the Home portrait rail: a soft squircle portrait about 70px with
+ *            the name underneath. No card, no container, no metadata.
+ * `bubble` — the full people view: a larger circular portrait with the name
+ *            underneath, airy and spaced in a collection.
+ *
+ * Two presentations, one component, one link. Both go to exactly the same
+ * `/people/$personId` profile they always did; only the way the person is
+ * shown changes. The old large person card is gone rather than kept around.
+ */
+export type PersonCardVariant = "rail" | "bubble";
 
-export function PersonCard({ person, memoryCount }: { person: Person; memoryCount: number }) {
+export function PersonCard({ person, variant }: { person: Person; variant: PersonCardVariant }) {
+  const rail = variant === "rail";
+
   return (
     <Link
       to="/people/$personId"
       params={{ personId: person.id }}
-      className="group flex cursor-pointer flex-col items-center gap-1 rounded-xl bg-surface-container-lowest p-4 text-center shadow-sm transition-all duration-200 hover:shadow-md"
+      aria-label={`Open ${person.name}'s profile`}
+      className={cn(
+        "group flex shrink-0 cursor-pointer flex-col items-center gap-2 rounded-2xl text-center outline-none transition-colors focus-visible:ring-2 focus-visible:ring-primary/40",
+        rail ? "w-[76px]" : "w-full",
+      )}
     >
       <PersonAvatar
         initial={person.initial}
         tone={person.tone}
-        className="transition-transform group-hover:scale-105"
+        size={rail ? "rail" : "lg"}
+        // A soft squircle on the rail, a clean circle in the full view.
+        className={cn(
+          "transition-transform duration-200 group-hover:-translate-y-0.5",
+          rail && "rounded-2xl",
+        )}
       >
+        {/* The one piece of status worth showing: someone has a nudge waiting.
+            Ring matches whatever the portrait is sitting on. */}
         {person.hasActiveReminder ? (
-          <span className="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full bg-secondary ring-2 ring-surface-container-lowest" />
+          <span
+            aria-hidden="true"
+            className={cn(
+              "absolute bottom-0 right-0 rounded-full bg-secondary",
+              rail ? "h-3 w-3 ring-2 ring-surface" : "h-3.5 w-3.5 ring-2",
+            )}
+          />
         ) : null}
       </PersonAvatar>
-      <div className="mt-1 flex flex-col items-center">
-        <span className="text-title-sm text-on-surface">{person.name}</span>
-        <span className={cn("text-label-sm font-medium", countTone[person.tone])}>
-          {memoryCount} {memoryCount === 1 ? "memory" : "memories"}
-        </span>
-      </div>
-      <p className="mt-0.5 line-clamp-1 text-body-sm italic text-on-surface-variant">
-        “{person.headline}”
-      </p>
+      <span
+        className={cn("w-full truncate text-on-surface", rail ? "text-label-md" : "text-title-sm")}
+      >
+        {person.name}
+      </span>
     </Link>
   );
 }

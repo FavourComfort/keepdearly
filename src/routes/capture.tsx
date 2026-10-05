@@ -46,6 +46,9 @@ function Capture() {
   const [reminder, setReminder] = useState("none");
   const [reminderDate, setReminderDate] = useState("");
   const [reminderTime, setReminderTime] = useState("");
+  // The one optional attachment. It travels with the memory through a single
+  // "Keep it", so the user never sees an upload step of their own.
+  const [photo, setPhoto] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -73,6 +76,7 @@ function Capture() {
       reminderOption: reminder,
       reminderDate,
       reminderTime,
+      photo,
     });
 
     setSaving(false);
@@ -102,7 +106,7 @@ function Capture() {
             </p>
           </header>
 
-          <MemoryInput value={text} onChange={setText} />
+          <MemoryInput value={text} onChange={setText} photo={photo} onPhotoChange={setPhoto} />
 
           <section className="flex flex-col gap-3 rounded-xl bg-surface-container-lowest p-6 shadow-sm">
             <h2 className="text-title-md text-on-surface">Who is this about?</h2>
@@ -199,7 +203,7 @@ function Capture() {
               className={cn(!canSave && "opacity-50")}
             >
               <Icon name="favorite" filled className="text-[18px]" />
-              {saving ? "Keeping…" : "Keep it"}
+              {saving ? (photo ? "Uploading photo…" : "Keeping…") : "Keep it"}
             </PrimaryButton>
           </div>
         </div>

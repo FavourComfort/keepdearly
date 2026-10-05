@@ -29,6 +29,7 @@ import {
   type Reminder,
   type ScheduledMessage,
 } from "./keepdearly-data";
+import { deleteMemoryPhoto, signedMemoryPhotoUrl, uploadMemoryPhoto } from "./memory-photo";
 
 /**
  * KeepDearly's data, now backed by Supabase for the signed-in user.
@@ -57,6 +58,15 @@ export type SaveMemoryInput = {
   reminderDate?: string | undefined;
   /** The optional `<input type="time">` value behind "Choose date". */
   reminderTime?: string | undefined;
+  /**
+   * The one optional photo, straight from the composer.
+   *
+   * It is uploaded AFTER the memory row exists, because the object is named
+   * after the memory's own id — which is what keeps a photo welded to the
+   * memory it was attached to. Undefined or null means a text-only memory, and
+   * that path is untouched.
+   */
+  photo?: File | null | undefined;
 };
 
 export type SaveMemoryResult = {
@@ -114,7 +124,7 @@ type Store = {
 
 const KeepDearlyContext = createContext<Store | null>(null);
 
-function toMemoryView(row: MemoryRow, people: PersonRow[]): Memory {
+function toMemoryView(row: MemoryRow, people: PersonRow[], photoUrl?: string): Memory {
   const person = row.person_id ? people.find((p) => p.id === row.person_id) : undefined;
   return {
     id: row.id,
@@ -123,6 +133,7 @@ function toMemoryView(row: MemoryRow, people: PersonRow[]): Memory {
     text: row.content,
     when: memoryWhen(row.created_at),
     tone: row.person_id ? toneForId(row.person_id) : "neutral",
+    photoUrl,
   };
 }
 
@@ -198,6 +209,11 @@ export function KeepDearlyProvider({ children }: { children: ReactNode }) {
   const [memoryRows, setMemoryRows] = useState<MemoryRow[]>([]);
   const [reminderRows, setReminderRows] = useState<ReminderRow[]>([]);
   const [scheduledMessageRows, setScheduledMessageRows] = useState<ScheduledMessageRow[]>([]);
+  // Signed photo URLs, keyed by memory id. The bucket is private, so a photo
+  // has no usable URL until Supabase signs one. Signed once per load rather
+  // than on every render, and refreshed when the tab comes back to the
+  // foreground so a long-lived tab never outlives the hour-long signature.
+  const [photoUrls, setPhotoUrls] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -212,6 +228,37 @@ export function KeepDearlyProvider({ children }: { children: ReactNode }) {
     return () => clearInterval(timer);
   }, []);
 
+  // Signing a photo URL is a network round trip, so it happens once per load
+  // rather than once per memory per render. A memory with no photo adds nothing.
+  const resolvePhotoUrls = useCallback(async (rows: MemoryRow[]) => {
+    const signed: Record<string, string> = {};
+    await Promise.all(
+      rows.map(async (row) => {
+        if (!row.photo_path) return;
+        const url = await signedMemoryPhotoUrl(row.photo_path);
+        if (url) signed[row.id] = url;
+      }),
+    );
+    setPhotoUrls(signed);
+  }, []);
+
+  // A signed URL expires after an hour, and nothing re-runs `load()` while a
+  // tab simply sits there — the 60s tick above only feeds the clock that
+  // "overdue" wording is derived from. So a tab left open long enough would
+  // start showing broken photos. Re-signing on the way back to the foreground
+  // is the cheapest fix that keeps them alive, and costs nothing while the tab
+  // is visible.
+  useEffect(() => {
+    if (!memoryRows.some((row) => row.photo_path)) return;
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") void resolvePhotoUrls(memoryRows);
+    };
+
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", onVisibilityChange);
+  }, [memoryRows, resolvePhotoUrls]);
+
   const load = useCallback(async () => {
     // Signed out, or Supabase not configured yet: nothing to load, and no
     // client to ask.
@@ -220,6 +267,7 @@ export function KeepDearlyProvider({ children }: { children: ReactNode }) {
       setMemoryRows([]);
       setReminderRows([]);
       setScheduledMessageRows([]);
+      setPhotoUrls({});
       setLoading(false);
       setError(null);
       return;
@@ -265,12 +313,15 @@ export function KeepDearlyProvider({ children }: { children: ReactNode }) {
     // Only replace what actually came back, so one failed read cannot wipe
     // data the others delivered.
     if (peopleResult.data) setPersonRows(peopleResult.data);
-    if (memoriesResult.data) setMemoryRows(memoriesResult.data);
+    if (memoriesResult.data) {
+      setMemoryRows(memoriesResult.data);
+      void resolvePhotoUrls(memoriesResult.data);
+    }
     if (remindersResult.data) setReminderRows(remindersResult.data);
     if (scheduledResult.data) setScheduledMessageRows(scheduledResult.data);
 
     setLoading(false);
-  }, [userId, isConfigured]);
+  }, [userId, isConfigured, resolvePhotoUrls]);
 
   useEffect(() => {
     void load();
@@ -281,8 +332,8 @@ export function KeepDearlyProvider({ children }: { children: ReactNode }) {
     [personRows, memoryRows, reminderRows],
   );
   const memories = useMemo(
-    () => memoryRows.map((row) => toMemoryView(row, personRows)),
-    [memoryRows, personRows],
+    () => memoryRows.map((row) => toMemoryView(row, personRows, photoUrls[row.id])),
+    [memoryRows, personRows, photoUrls],
   );
   const reminders = useMemo(
     () => reminderRows.map((row) => toReminderView(row, memoryRows, personRows, new Date(nowMs))),
@@ -379,6 +430,7 @@ export function KeepDearlyProvider({ children }: { children: ReactNode }) {
       reminderOption,
       reminderDate,
       reminderTime,
+      photo,
     }: SaveMemoryInput): Promise<SaveMemoryResult> => {
       const trimmed = content.trim();
       if (!userId || !isConfigured) {
@@ -419,6 +471,30 @@ export function KeepDearlyProvider({ children }: { children: ReactNode }) {
       if (memoryError || !memory) {
         console.error("Could not create memory:", memoryError?.message);
         return { ok: false, error: "We couldn't keep that just now.", personId: resolvedPersonId };
+      }
+
+      // The photo goes up against the memory's own id, so the object path is
+      // `<user_id>/<memory_id>.<ext>` and the row can never end up pointing at
+      // somebody else's file. The memory itself already exists by now, so a
+      // failed upload is reported rather than allowed to lose the words.
+      if (photo) {
+        try {
+          const photoPath = await uploadMemoryPhoto(userId, memory.id, photo);
+          const { error: photoError } = await supabase
+            .from("memories")
+            .update({ photo_path: photoPath })
+            .eq("id", memory.id)
+            .eq("user_id", userId);
+
+          if (photoError) {
+            console.error("Could not attach photo:", photoError.message);
+            // The object is there but nothing points at it, so it shouldn't be
+            // left sitting in the user's folder.
+            await deleteMemoryPhoto(photoPath);
+          }
+        } catch (uploadError) {
+          console.error("Could not upload photo:", uploadError);
+        }
       }
 
       // A reminder row is created only for options that resolve to a real

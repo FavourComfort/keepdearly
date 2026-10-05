@@ -29,7 +29,7 @@ export const Route = createFileRoute("/")({
 });
 
 function Home() {
-  const { memories, people, reminders, memoriesFor, loading, error } = useKeepDearly();
+  const { memories, people, reminders, loading, error } = useKeepDearly();
   // "Coming up" means coming up. A reminder you already marked done, let go, or
   // simply never got to is not coming up, and neither is yesterday's.
   const upcoming = reminders
@@ -98,8 +98,11 @@ function Home() {
             <section className="mt-10 flex flex-col gap-4 sm:mt-12">
               <h2 className="text-headline-sm text-on-surface">Recently kept</h2>
               {memories.length ? (
-                <div className="flex flex-col gap-3 sm:gap-4">
-                  {memories.slice(0, 4).map((memory) => (
+                // A dense collection rather than a tall stack: one column of
+                // compact rows on a phone, two on a tablet, three on a desktop —
+                // so several recent keeps are visible at once.
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {memories.slice(0, 6).map((memory) => (
                     <MemoryCard key={memory.id} memory={memory} />
                   ))}
                 </div>
@@ -111,16 +114,38 @@ function Home() {
             </section>
 
             <section className="mt-10 flex flex-col gap-4 sm:mt-12">
-              <h2 className="text-headline-sm text-on-surface">People you keep close</h2>
+              <div className="flex items-baseline justify-between gap-3">
+                <h2 className="text-headline-sm text-on-surface">People you keep close</h2>
+                {people.length ? (
+                  <Link to="/people" className="text-label-md text-primary hover:underline">
+                    See all
+                  </Link>
+                ) : null}
+              </div>
               {people.length ? (
-                <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-                  {people.map((person) => (
-                    <PersonCard
-                      key={person.id}
-                      person={person}
-                      memoryCount={memoriesFor(person.id).length}
-                    />
+                // A portrait rail, not a grid of cards: a quiet row of the first few
+                // people. Home deliberately shows only the first five — "See all" is
+                // where everybody else lives. The negative margin lets the rail
+                // reach the screen edge on a phone while the page itself never
+                // scrolls sideways.
+                <div className="-mx-4 flex gap-4 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
+                  {people.slice(0, 5).map((person) => (
+                    <PersonCard key={person.id} person={person} variant="rail" />
                   ))}
+                  {/* The one affordance at the end of the rail. It is not a person,
+                    so it never changes the "first five" rule above. */}
+                  <Link
+                    to="/capture"
+                    className="flex w-[76px] shrink-0 flex-col items-center gap-2 rounded-2xl text-center"
+                    title="Keep a memory and add someone"
+                  >
+                    <span className="flex h-[70px] w-[70px] items-center justify-center rounded-2xl border border-dashed border-outline-variant text-primary transition-colors hover:bg-surface-container-low">
+                      <Icon name="add" className="text-[22px]" />
+                    </span>
+                    <span className="w-full truncate text-label-md text-on-surface-variant">
+                      Add
+                    </span>
+                  </Link>
                 </div>
               ) : (
                 <DataEmpty>

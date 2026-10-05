@@ -18,6 +18,7 @@ import { Route as RemindersRouteImport } from './routes/reminders'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as ApiDailyNudgeRouteImport } from './routes/api.daily-nudge'
+import { Route as PeopleIndexRouteImport } from './routes/people.index'
 import { Route as PeoplePersonIdRouteImport } from './routes/people.$personId'
 import { Route as ApiMessagesDueRouteImport } from './routes/api.messages.due'
 import { Route as ApiPlusCheckoutRouteImport } from './routes/api.plus.checkout'
@@ -72,6 +73,11 @@ const ApiDailyNudgeRoute = ApiDailyNudgeRouteImport.update({
   path: '/api/daily-nudge',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PeopleIndexRoute = PeopleIndexRouteImport.update({
+  id: '/people/',
+  path: '/people/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PeoplePersonIdRoute = PeoplePersonIdRouteImport.update({
   id: '/people/$personId',
   path: '/people/$personId',
@@ -124,6 +130,7 @@ export interface FileRoutesByFullPath {
   '/signup': typeof SignupRoute
   '/api/daily-nudge': typeof ApiDailyNudgeRoute
   '/people/$personId': typeof PeoplePersonIdRouteWithChildren
+  '/people/': typeof PeopleIndexRoute
   '/api/messages/due': typeof ApiMessagesDueRoute
   '/api/plus/checkout': typeof ApiPlusCheckoutRoute
   '/api/plus/retry': typeof ApiPlusRetryRoute
@@ -143,6 +150,7 @@ export interface FileRoutesByTo {
   '/signup': typeof SignupRoute
   '/api/daily-nudge': typeof ApiDailyNudgeRoute
   '/people/$personId': typeof PeoplePersonIdRouteWithChildren
+  '/people': typeof PeopleIndexRoute
   '/api/messages/due': typeof ApiMessagesDueRoute
   '/api/plus/checkout': typeof ApiPlusCheckoutRoute
   '/api/plus/retry': typeof ApiPlusRetryRoute
@@ -163,6 +171,7 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/api/daily-nudge': typeof ApiDailyNudgeRoute
   '/people/$personId': typeof PeoplePersonIdRouteWithChildren
+  '/people/': typeof PeopleIndexRoute
   '/api/messages/due': typeof ApiMessagesDueRoute
   '/api/plus/checkout': typeof ApiPlusCheckoutRoute
   '/api/plus/retry': typeof ApiPlusRetryRoute
@@ -184,6 +193,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/api/daily-nudge'
     | '/people/$personId'
+    | '/people/'
     | '/api/messages/due'
     | '/api/plus/checkout'
     | '/api/plus/retry'
@@ -203,6 +213,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/api/daily-nudge'
     | '/people/$personId'
+    | '/people'
     | '/api/messages/due'
     | '/api/plus/checkout'
     | '/api/plus/retry'
@@ -222,6 +233,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/api/daily-nudge'
     | '/people/$personId'
+    | '/people/'
     | '/api/messages/due'
     | '/api/plus/checkout'
     | '/api/plus/retry'
@@ -242,6 +254,7 @@ export interface RootRouteChildren {
   SignupRoute: typeof SignupRoute
   ApiDailyNudgeRoute: typeof ApiDailyNudgeRoute
   PeoplePersonIdRoute: typeof PeoplePersonIdRouteWithChildren
+  PeopleIndexRoute: typeof PeopleIndexRoute
   ApiMessagesDueRoute: typeof ApiMessagesDueRoute
   ApiPlusCheckoutRoute: typeof ApiPlusCheckoutRoute
   ApiPlusRetryRoute: typeof ApiPlusRetryRoute
@@ -313,6 +326,13 @@ declare module '@tanstack/react-router' {
       path: '/api/daily-nudge'
       fullPath: '/api/daily-nudge'
       preLoaderRoute: typeof ApiDailyNudgeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/people/': {
+      id: '/people/'
+      path: '/people'
+      fullPath: '/people/'
+      preLoaderRoute: typeof PeopleIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/people/$personId': {
@@ -397,6 +417,7 @@ const rootRouteChildren: RootRouteChildren = {
   SignupRoute: SignupRoute,
   ApiDailyNudgeRoute: ApiDailyNudgeRoute,
   PeoplePersonIdRoute: PeoplePersonIdRouteWithChildren,
+  PeopleIndexRoute: PeopleIndexRoute,
   ApiMessagesDueRoute: ApiMessagesDueRoute,
   ApiPlusCheckoutRoute: ApiPlusCheckoutRoute,
   ApiPlusRetryRoute: ApiPlusRetryRoute,

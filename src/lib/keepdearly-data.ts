@@ -61,6 +61,13 @@ export type Memory = {
   text: string;
   when: string;
   tone: Tone;
+  /**
+   * A short-lived signed URL for the memory's photo, or unset when it has none.
+   *
+   * Resolved once per load in the store: the bucket is private, so a URL cannot
+   * be derived from the path alone. Never a permanent link.
+   */
+  photoUrl?: string | undefined;
   // No data source in Phase 2 — left unset so the existing markup hides them.
   topic?: string | undefined;
   footnote?: string | undefined;
@@ -276,8 +283,17 @@ export function remindAtForOption(optionId: string, from: Date = new Date()): Da
  * Resolves "Choose date" into a real local moment.
  *
  * `dateValue` is a `<input type="date">` value ("2026-10-04") and `timeValue` a
- * `<input type="time">` value ("14:30"). An empty or malformed time falls back
- * to the app's existing 9:00 AM convention, so a date alone is always enough.
+ * 24-hour "HH:MM" value ("14:30"). An empty or malformed time falls back to the
+ * app's existing 9:00 AM convention, so a date alone is always enough.
+ *
+ * Both halves are wall-clock, not UTC: someone who picked "21:00" meant 21:00
+ * where they are sitting. So the moment is built with the local-time
+ * constructor. Nothing here parses a date-only string (which JavaScript reads
+ * as UTC midnight) or joins "YYYY-MM-DDTHH:MM" (which pulls the offset in), and
+ * nothing is derived from `new Date()` — the chosen day and clock are used
+ * exactly as written, so the result can never slide onto a neighbouring
+ * calendar day because of where the device or server happens to be running.
+ * `toISOString()` does the single UTC conversion, later, at the storage edge.
  *
  * Returns null when the date is missing or unparseable — the caller shows a
  * gentle message rather than inventing a moment.
@@ -289,17 +305,34 @@ export function remindAtForChosenDate(
   const [year, month, day] = dateValue.split("-").map(Number);
   if (!year || !month || !day) return null;
 
-  const when = new Date();
-  when.setHours(DEFAULT_REMINDER_HOUR, 0, 0, 0);
-
+  // "HH:MM", strictly. Range-checked because `setHours(25, 0)` would silently
+  // roll over into tomorrow 01:00 — a chosen time must never move the date.
   const [rawHours, rawMinutes] = (timeValue ?? "").split(":");
   const hours = Number(rawHours);
   const minutes = Number(rawMinutes);
-  if (rawHours && rawMinutes && Number.isFinite(hours) && Number.isFinite(minutes)) {
-    when.setHours(hours, minutes, 0, 0);
-  }
+  const hasTime =
+    rawHours !== undefined &&
+    rawMinutes !== undefined &&
+    rawHours !== "" &&
+    rawMinutes !== "" &&
+    Number.isInteger(hours) &&
+    Number.isInteger(minutes) &&
+    hours >= 0 &&
+    hours <= 23 &&
+    minutes >= 0 &&
+    minutes <= 59;
 
-  when.setFullYear(year, month - 1, day);
+  // Local wall-clock: year, zero-based month, day, hour, minute, and zeroed
+  // seconds/milliseconds so the moment is never a fraction into the minute.
+  const when = new Date(
+    year,
+    month - 1,
+    day,
+    hasTime ? hours : DEFAULT_REMINDER_HOUR,
+    hasTime ? minutes : 0,
+    0,
+    0,
+  );
   return Number.isNaN(when.getTime()) ? null : when;
 }
 
