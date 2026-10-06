@@ -22,24 +22,44 @@ export function PersonAvatar({
   tone = "primary",
   size = "md",
   className,
+  photoUrl,
   children,
 }: {
   initial: string;
   tone?: Tone;
   size?: keyof typeof sizeClasses;
   className?: string;
+  /** A signed profile photo. Falls back to the initial when there isn't one. */
+  photoUrl?: string | undefined;
   children?: React.ReactNode;
 }) {
   return (
     <div
       className={cn(
-        "relative flex shrink-0 select-none items-center justify-center rounded-full shadow-sm",
+        "relative flex shrink-0 select-none items-center justify-center overflow-hidden rounded-full shadow-sm",
         toneClasses[tone],
         sizeClasses[size],
         className,
       )}
     >
-      {initial}
+      {/* The photo fills whatever shape the caller asked for and crops to it, so
+          it never stretches or changes the layout as it loads. The initial sits
+          behind it and simply shows through when there is no photo, or if one
+          ever fails to load. */}
+      <span
+        aria-hidden={photoUrl ? "true" : undefined}
+        className={photoUrl ? "sr-only" : undefined}
+      >
+        {initial}
+      </span>
+      {photoUrl ? (
+        <img
+          src={photoUrl}
+          alt=""
+          loading="lazy"
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+      ) : null}
       {children}
     </div>
   );

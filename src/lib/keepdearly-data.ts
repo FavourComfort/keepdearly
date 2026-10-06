@@ -36,6 +36,14 @@ export type Person = {
   initial: string;
   /** Stable accent derived from the id so a person keeps one colour. */
   tone: Tone;
+  /**
+   * A short-lived signed URL for this person's profile photo, or unset when
+   * they have none and the initial stands in.
+   *
+   * Resolved once per load in the store: the bucket is private, so a URL cannot
+   * be derived from the stored path alone. Never a permanent link.
+   */
+  avatarUrl?: string | undefined;
   /** The person's most recent memory, or a short fallback. */
   headline: string;
   likes: string[];

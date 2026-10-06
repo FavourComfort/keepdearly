@@ -20,6 +20,7 @@ import { Route as SignupRouteImport } from './routes/signup'
 import { Route as ApiDailyNudgeRouteImport } from './routes/api.daily-nudge'
 import { Route as PeopleIndexRouteImport } from './routes/people.index'
 import { Route as PeoplePersonIdRouteImport } from './routes/people.$personId'
+import { Route as PeopleNewRouteImport } from './routes/people.new'
 import { Route as ApiMessagesDueRouteImport } from './routes/api.messages.due'
 import { Route as ApiPlusCheckoutRouteImport } from './routes/api.plus.checkout'
 import { Route as ApiPlusRetryRouteImport } from './routes/api.plus.retry'
@@ -83,6 +84,11 @@ const PeoplePersonIdRoute = PeoplePersonIdRouteImport.update({
   path: '/people/$personId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PeopleNewRoute = PeopleNewRouteImport.update({
+  id: '/people/new',
+  path: '/people/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiMessagesDueRoute = ApiMessagesDueRouteImport.update({
   id: '/api/messages/due',
   path: '/api/messages/due',
@@ -130,6 +136,7 @@ export interface FileRoutesByFullPath {
   '/signup': typeof SignupRoute
   '/api/daily-nudge': typeof ApiDailyNudgeRoute
   '/people/$personId': typeof PeoplePersonIdRouteWithChildren
+  '/people/new': typeof PeopleNewRoute
   '/people/': typeof PeopleIndexRoute
   '/api/messages/due': typeof ApiMessagesDueRoute
   '/api/plus/checkout': typeof ApiPlusCheckoutRoute
@@ -150,6 +157,7 @@ export interface FileRoutesByTo {
   '/signup': typeof SignupRoute
   '/api/daily-nudge': typeof ApiDailyNudgeRoute
   '/people/$personId': typeof PeoplePersonIdRouteWithChildren
+  '/people/new': typeof PeopleNewRoute
   '/people': typeof PeopleIndexRoute
   '/api/messages/due': typeof ApiMessagesDueRoute
   '/api/plus/checkout': typeof ApiPlusCheckoutRoute
@@ -171,6 +179,7 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/api/daily-nudge': typeof ApiDailyNudgeRoute
   '/people/$personId': typeof PeoplePersonIdRouteWithChildren
+  '/people/new': typeof PeopleNewRoute
   '/people/': typeof PeopleIndexRoute
   '/api/messages/due': typeof ApiMessagesDueRoute
   '/api/plus/checkout': typeof ApiPlusCheckoutRoute
@@ -193,6 +202,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/api/daily-nudge'
     | '/people/$personId'
+    | '/people/new'
     | '/people/'
     | '/api/messages/due'
     | '/api/plus/checkout'
@@ -213,6 +223,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/api/daily-nudge'
     | '/people/$personId'
+    | '/people/new'
     | '/people'
     | '/api/messages/due'
     | '/api/plus/checkout'
@@ -233,6 +244,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/api/daily-nudge'
     | '/people/$personId'
+    | '/people/new'
     | '/people/'
     | '/api/messages/due'
     | '/api/plus/checkout'
@@ -254,6 +266,7 @@ export interface RootRouteChildren {
   SignupRoute: typeof SignupRoute
   ApiDailyNudgeRoute: typeof ApiDailyNudgeRoute
   PeoplePersonIdRoute: typeof PeoplePersonIdRouteWithChildren
+  PeopleNewRoute: typeof PeopleNewRoute
   PeopleIndexRoute: typeof PeopleIndexRoute
   ApiMessagesDueRoute: typeof ApiMessagesDueRoute
   ApiPlusCheckoutRoute: typeof ApiPlusCheckoutRoute
@@ -342,6 +355,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PeoplePersonIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/people/new': {
+      id: '/people/new'
+      path: '/people/new'
+      fullPath: '/people/new'
+      preLoaderRoute: typeof PeopleNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/messages/due': {
       id: '/api/messages/due'
       path: '/api/messages/due'
@@ -417,6 +437,7 @@ const rootRouteChildren: RootRouteChildren = {
   SignupRoute: SignupRoute,
   ApiDailyNudgeRoute: ApiDailyNudgeRoute,
   PeoplePersonIdRoute: PeoplePersonIdRouteWithChildren,
+  PeopleNewRoute: PeopleNewRoute,
   PeopleIndexRoute: PeopleIndexRoute,
   ApiMessagesDueRoute: ApiMessagesDueRoute,
   ApiPlusCheckoutRoute: ApiPlusCheckoutRoute,

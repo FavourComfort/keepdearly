@@ -34,6 +34,7 @@ export function PersonCard({ person, variant }: { person: Person; variant: Perso
         initial={person.initial}
         tone={person.tone}
         size={rail ? "rail" : "lg"}
+        photoUrl={person.avatarUrl}
         // A soft squircle on the rail, a clean circle in the full view.
         className={cn(
           "transition-transform duration-200 group-hover:-translate-y-0.5",

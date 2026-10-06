@@ -79,7 +79,12 @@ function PersonProfile() {
       <AppShell>
         <div className="flex flex-col gap-10 pt-8">
           <header className="flex flex-col items-center gap-3 text-center">
-            <PersonAvatar initial={person.initial} tone={person.tone} size="lg" />
+            <PersonAvatar
+              initial={person.initial}
+              tone={person.tone}
+              size="lg"
+              photoUrl={person.avatarUrl}
+            />
             <div className="flex flex-col gap-1">
               <h1 className="text-headline-xl text-on-surface">{person.name}</h1>
               {person.relationship ? (

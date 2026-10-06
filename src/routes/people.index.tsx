@@ -67,9 +67,9 @@ function People() {
               {/* Adding a person still happens while keeping a memory — that is
                   the existing flow, and it is not redesigned here. */}
               <Link
-                to="/capture"
+                to="/people/new"
                 className="flex w-full flex-col items-center gap-2 rounded-2xl text-center outline-none transition-colors focus-visible:ring-2 focus-visible:ring-primary/40"
-                title="Keep a memory and add someone"
+                title="Add someone"
               >
                 <span className="flex h-20 w-20 items-center justify-center rounded-full border border-dashed border-outline-variant text-primary transition-colors hover:bg-surface-container-low md:h-24 md:w-24">
                   <Icon name="add" className="text-[26px]" />

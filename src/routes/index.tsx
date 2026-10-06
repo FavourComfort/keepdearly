@@ -96,24 +96,6 @@ function Home() {
         ) : (
           <>
             <section className="mt-10 flex flex-col gap-4 sm:mt-12">
-              <h2 className="text-headline-sm text-on-surface">Recently kept</h2>
-              {memories.length ? (
-                // A dense collection rather than a tall stack: one column of
-                // compact rows on a phone, two on a tablet, three on a desktop —
-                // so several recent keeps are visible at once.
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                  {memories.slice(0, 6).map((memory) => (
-                    <MemoryCard key={memory.id} memory={memory} />
-                  ))}
-                </div>
-              ) : (
-                <DataEmpty>
-                  Nothing kept yet. Capture the first small thing someone tells you.
-                </DataEmpty>
-              )}
-            </section>
-
-            <section className="mt-10 flex flex-col gap-4 sm:mt-12">
               <div className="flex items-baseline justify-between gap-3">
                 <h2 className="text-headline-sm text-on-surface">People you keep close</h2>
                 {people.length ? (
@@ -135,9 +117,9 @@ function Home() {
                   {/* The one affordance at the end of the rail. It is not a person,
                     so it never changes the "first five" rule above. */}
                   <Link
-                    to="/capture"
+                    to="/people/new"
                     className="flex w-[76px] shrink-0 flex-col items-center gap-2 rounded-2xl text-center"
-                    title="Keep a memory and add someone"
+                    title="Add someone"
                   >
                     <span className="flex h-[70px] w-[70px] items-center justify-center rounded-2xl border border-dashed border-outline-variant text-primary transition-colors hover:bg-surface-container-low">
                       <Icon name="add" className="text-[22px]" />
@@ -150,6 +132,24 @@ function Home() {
               ) : (
                 <DataEmpty>
                   Nobody kept close yet. Add a person while you capture, and they will appear here.
+                </DataEmpty>
+              )}
+            </section>
+
+            <section className="mt-10 flex flex-col gap-4 sm:mt-12">
+              <h2 className="text-headline-sm text-on-surface">Recently kept</h2>
+              {memories.length ? (
+                // A dense collection rather than a tall stack: one column of
+                // compact rows on a phone, two on a tablet, three on a desktop —
+                // so several recent keeps are visible at once.
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {memories.slice(0, 6).map((memory) => (
+                    <MemoryCard key={memory.id} memory={memory} />
+                  ))}
+                </div>
+              ) : (
+                <DataEmpty>
+                  Nothing kept yet. Capture the first small thing someone tells you.
                 </DataEmpty>
               )}
             </section>

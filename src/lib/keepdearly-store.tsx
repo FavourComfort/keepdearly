@@ -30,6 +30,7 @@ import {
   type ScheduledMessage,
 } from "./keepdearly-data";
 import { deleteMemoryPhoto, signedMemoryPhotoUrl, uploadMemoryPhoto } from "./memory-photo";
+import { deletePersonAvatar, signedPersonAvatarUrl, uploadPersonAvatar } from "./person-photo";
 
 /**
  * KeepDearly's data, now backed by Supabase for the signed-in user.
@@ -76,6 +77,25 @@ export type SaveMemoryResult = {
   personId: string | null;
 };
 
+export type SavePersonInput = {
+  name: string;
+  /**
+   * The one optional profile photo, straight from the Add someone screen.
+   *
+   * Uploaded AFTER the person row exists, because the object is named after the
+   * person's own id. Undefined or null means an initial-only portrait, which is
+   * the same fallback people already have today.
+   */
+  photo?: File | null | undefined;
+};
+
+export type SavePersonResult = {
+  ok: boolean;
+  error: string | null;
+  /** The person that was created, or null when nothing was. */
+  personId: string | null;
+};
+
 /** Every reminder mutation reports the same way, so screens handle one shape. */
 export type ReminderActionResult = {
   ok: boolean;
@@ -114,6 +134,7 @@ type Store = {
   memoriesFor: (personId: string) => Memory[];
   scheduledMessagesFor: (personId: string) => ScheduledMessage[];
   saveMemory: (input: SaveMemoryInput) => Promise<SaveMemoryResult>;
+  savePerson: (input: SavePersonInput) => Promise<SavePersonResult>;
   completeReminder: (id: string) => Promise<ReminderActionResult>;
   cancelReminder: (id: string) => Promise<ReminderActionResult>;
   rescheduleReminder: (id: string, remindAt: Date) => Promise<ReminderActionResult>;
@@ -137,7 +158,12 @@ function toMemoryView(row: MemoryRow, people: PersonRow[], photoUrl?: string): M
   };
 }
 
-function toPersonView(row: PersonRow, memories: MemoryRow[], reminders: ReminderRow[]): Person {
+function toPersonView(
+  row: PersonRow,
+  memories: MemoryRow[],
+  reminders: ReminderRow[],
+  avatarUrl?: string,
+): Person {
   // `memories` arrives newest first, so the first match is the latest one.
   const latest = memories.find((memory) => memory.person_id === row.id);
   const ownMemoryIds = new Set(
@@ -152,6 +178,7 @@ function toPersonView(row: PersonRow, memories: MemoryRow[], reminders: Reminder
     name: row.name,
     initial: initialForName(row.name),
     tone: toneForId(row.id),
+    avatarUrl,
     headline: latest?.content ?? "Nothing kept yet.",
     // No columns back these yet, and inventing values would be fake data.
     likes: [],
@@ -214,6 +241,9 @@ export function KeepDearlyProvider({ children }: { children: ReactNode }) {
   // than on every render, and refreshed when the tab comes back to the
   // foreground so a long-lived tab never outlives the hour-long signature.
   const [photoUrls, setPhotoUrls] = useState<Record<string, string>>({});
+  // Signed profile-photo URLs, keyed by person id. Same private-bucket story as
+  // the memory photos, and resolved once per load rather than per render.
+  const [avatarUrls, setAvatarUrls] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -242,6 +272,20 @@ export function KeepDearlyProvider({ children }: { children: ReactNode }) {
     setPhotoUrls(signed);
   }, []);
 
+  // Same story for profile photos: signing is a network round trip, so it happens
+  // once per load, and a person with no portrait adds nothing.
+  const resolveAvatarUrls = useCallback(async (rows: PersonRow[]) => {
+    const signed: Record<string, string> = {};
+    await Promise.all(
+      rows.map(async (row) => {
+        if (!row.avatar_url) return;
+        const url = await signedPersonAvatarUrl(row.avatar_url);
+        if (url) signed[row.id] = url;
+      }),
+    );
+    setAvatarUrls(signed);
+  }, []);
+
   // A signed URL expires after an hour, and nothing re-runs `load()` while a
   // tab simply sits there — the 60s tick above only feeds the clock that
   // "overdue" wording is derived from. So a tab left open long enough would
@@ -249,15 +293,19 @@ export function KeepDearlyProvider({ children }: { children: ReactNode }) {
   // is the cheapest fix that keeps them alive, and costs nothing while the tab
   // is visible.
   useEffect(() => {
-    if (!memoryRows.some((row) => row.photo_path)) return;
+    const hasPhotos = memoryRows.some((row) => row.photo_path);
+    const hasAvatars = personRows.some((row) => row.avatar_url);
+    if (!hasPhotos && !hasAvatars) return;
 
     const onVisibilityChange = () => {
-      if (document.visibilityState === "visible") void resolvePhotoUrls(memoryRows);
+      if (document.visibilityState !== "visible") return;
+      if (hasPhotos) void resolvePhotoUrls(memoryRows);
+      if (hasAvatars) void resolveAvatarUrls(personRows);
     };
 
     document.addEventListener("visibilitychange", onVisibilityChange);
     return () => document.removeEventListener("visibilitychange", onVisibilityChange);
-  }, [memoryRows, resolvePhotoUrls]);
+  }, [memoryRows, personRows, resolvePhotoUrls, resolveAvatarUrls]);
 
   const load = useCallback(async () => {
     // Signed out, or Supabase not configured yet: nothing to load, and no
@@ -268,6 +316,7 @@ export function KeepDearlyProvider({ children }: { children: ReactNode }) {
       setReminderRows([]);
       setScheduledMessageRows([]);
       setPhotoUrls({});
+      setAvatarUrls({});
       setLoading(false);
       setError(null);
       return;
@@ -312,7 +361,10 @@ export function KeepDearlyProvider({ children }: { children: ReactNode }) {
 
     // Only replace what actually came back, so one failed read cannot wipe
     // data the others delivered.
-    if (peopleResult.data) setPersonRows(peopleResult.data);
+    if (peopleResult.data) {
+      setPersonRows(peopleResult.data);
+      void resolveAvatarUrls(peopleResult.data);
+    }
     if (memoriesResult.data) {
       setMemoryRows(memoriesResult.data);
       void resolvePhotoUrls(memoriesResult.data);
@@ -321,15 +373,15 @@ export function KeepDearlyProvider({ children }: { children: ReactNode }) {
     if (scheduledResult.data) setScheduledMessageRows(scheduledResult.data);
 
     setLoading(false);
-  }, [userId, isConfigured, resolvePhotoUrls]);
+  }, [userId, isConfigured, resolvePhotoUrls, resolveAvatarUrls]);
 
   useEffect(() => {
     void load();
   }, [load]);
 
   const people = useMemo(
-    () => personRows.map((row) => toPersonView(row, memoryRows, reminderRows)),
-    [personRows, memoryRows, reminderRows],
+    () => personRows.map((row) => toPersonView(row, memoryRows, reminderRows, avatarUrls[row.id])),
+    [personRows, memoryRows, reminderRows, avatarUrls],
   );
   const memories = useMemo(
     () => memoryRows.map((row) => toMemoryView(row, personRows, photoUrls[row.id])),
@@ -420,6 +472,72 @@ export function KeepDearlyProvider({ children }: { children: ReactNode }) {
       return { ok: true, error: null };
     },
     [],
+  );
+
+  /**
+   * Create a person on their own, without a memory attached.
+   *
+   * This is the same insert `saveMemory` already performs for its inline
+   * "or add someone new…" field — one model, one code path, so a person added
+   * here is indistinguishable from one added mid-memory.
+   *
+   * The portrait goes up only after the row exists, because the object is named
+   * after the person's own id. A failed upload is reported rather than allowed
+   * to throw away the name someone just typed: the person is kept, and the
+   * screen simply moves on to them.
+   */
+  const savePerson = useCallback(
+    async ({ name, photo }: SavePersonInput): Promise<SavePersonResult> => {
+      const trimmed = name.trim();
+      if (!userId || !isConfigured) {
+        return { ok: false, error: LOAD_ERROR, personId: null };
+      }
+      if (!trimmed) {
+        return { ok: false, error: "Give them a name first.", personId: null };
+      }
+
+      const supabase = getSupabase();
+
+      const { data: person, error: personError } = await supabase
+        .from("people")
+        .insert({ user_id: userId, name: trimmed })
+        .select("id")
+        .single();
+
+      if (personError || !person) {
+        console.error("Could not create person:", personError?.message);
+        return { ok: false, error: "We couldn't keep that person just now.", personId: null };
+      }
+
+      if (photo) {
+        try {
+          const avatarPath = await uploadPersonAvatar(userId, person.id, photo);
+          const { error: avatarError } = await supabase
+            .from("people")
+            .update({ avatar_url: avatarPath })
+            .eq("id", person.id)
+            .eq("user_id", userId);
+
+          if (avatarError) {
+            console.error("Could not attach photo:", avatarError.message);
+            // The object is there but nothing points at it, so it shouldn't be
+            // left sitting in the user's folder.
+            await deletePersonAvatar(avatarPath);
+          }
+        } catch (uploadError) {
+          // The person is already saved, so a failed portrait only costs the
+          // picture — never the name.
+          console.error("Could not upload photo:", uploadError);
+        }
+      }
+
+      // So the new person is immediately selectable, in the Home rail, in
+      // /people, and in the memory composer, without a page reload.
+      await load();
+
+      return { ok: true, error: null, personId: person.id };
+    },
+    [userId, isConfigured, load],
   );
 
   const saveMemory = useCallback(
@@ -613,6 +731,7 @@ export function KeepDearlyProvider({ children }: { children: ReactNode }) {
       memoriesFor: (personId) => memories.filter((memory) => memory.personId === personId),
       scheduledMessagesFor: (personId) =>
         scheduledMessages.filter((message) => message.personId === personId),
+      savePerson,
       saveMemory,
       completeReminder,
       cancelReminder,
@@ -629,6 +748,7 @@ export function KeepDearlyProvider({ children }: { children: ReactNode }) {
       loading,
       error,
       load,
+      savePerson,
       saveMemory,
       completeReminder,
       cancelReminder,
