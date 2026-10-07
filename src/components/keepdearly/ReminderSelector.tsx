@@ -13,6 +13,9 @@ import { cn } from "@/lib/utils";
  *
  * The time stays optional on purpose. Left unset it falls back to the app's
  * existing 9:00 AM convention, which is what the relative options already use.
+ *
+ * The choices read as a light row of pills, not a settings grid — selected is
+ * obvious, everything else recedes.
  */
 export function ReminderSelector({
   value,
@@ -31,7 +34,7 @@ export function ReminderSelector({
 }) {
   return (
     <div className="flex flex-col gap-3 pt-1.5">
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+      <div className="flex flex-wrap gap-2">
         {reminderOptions.map((option) => {
           const selected = value === option.id;
           return (
@@ -41,27 +44,25 @@ export function ReminderSelector({
               onClick={() => onChange(option.id)}
               aria-pressed={selected}
               className={cn(
-                "flex items-center justify-between rounded-lg px-3.5 py-2.5 text-label-md shadow-sm transition-all",
+                "flex items-center gap-2 rounded-full px-4 py-2 text-label-md transition-all",
                 selected
-                  ? "bg-secondary-container text-on-secondary-container"
-                  : "bg-surface-container-lowest text-on-surface hover:bg-surface-container",
+                  ? "bg-secondary-container text-on-secondary-container shadow-sm"
+                  : "bg-surface-container-low text-on-surface-variant hover:bg-surface-container",
               )}
             >
-              <span className="flex items-center gap-2">
-                <Icon
-                  name={option.icon}
-                  className={cn("text-[16px]", selected ? "" : "text-outline")}
-                />
-                <span>{option.label}</span>
-              </span>
-              {selected ? <Icon name="check_circle" className="text-[16px]" /> : null}
+              <Icon
+                name={option.icon}
+                className={cn("text-[16px]", selected ? "" : "text-outline")}
+              />
+              <span>{option.label}</span>
+              {selected ? <Icon name="check" className="text-[16px]" /> : null}
             </button>
           );
         })}
       </div>
 
       {value === "date" ? (
-        <div className="flex flex-col gap-3 rounded-lg bg-surface-container-low p-4 sm:flex-row sm:items-end">
+        <div className="flex flex-col gap-3 rounded-2xl bg-surface-container-low/70 p-4 sm:flex-row sm:items-end">
           <div className="flex flex-1 flex-col gap-1">
             <label
               className="flex items-center gap-1.5 text-label-sm text-on-surface-variant"

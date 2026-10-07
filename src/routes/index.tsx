@@ -137,24 +137,6 @@ function Home() {
             </section>
 
             <section className="mt-10 flex flex-col gap-4 sm:mt-12">
-              <h2 className="text-headline-sm text-on-surface">Recently kept</h2>
-              {memories.length ? (
-                // A dense collection rather than a tall stack: one column of
-                // compact rows on a phone, two on a tablet, three on a desktop —
-                // so several recent keeps are visible at once.
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                  {memories.slice(0, 6).map((memory) => (
-                    <MemoryCard key={memory.id} memory={memory} />
-                  ))}
-                </div>
-              ) : (
-                <DataEmpty>
-                  Nothing kept yet. Capture the first small thing someone tells you.
-                </DataEmpty>
-              )}
-            </section>
-
-            <section className="mt-10 flex flex-col gap-4 sm:mt-12">
               <div className="flex items-baseline justify-between">
                 <h2 className="text-headline-sm text-on-surface">Coming up</h2>
                 <Link to="/reminders" className="text-label-md text-primary hover:underline">
@@ -171,6 +153,24 @@ function Home() {
                 <DataEmpty>
                   Nothing scheduled yet. Keep a memory, choose a nudge, and it will wait for you
                   here.
+                </DataEmpty>
+              )}
+            </section>
+
+            <section className="mt-10 flex flex-col gap-4 sm:mt-12">
+              <h2 className="text-headline-sm text-on-surface">Recently kept</h2>
+              {memories.length ? (
+                // A dense collection rather than a tall stack: one column of
+                // compact rows on a phone, two on a tablet, three on a desktop —
+                // so several recent keeps are visible at once.
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {memories.slice(0, 6).map((memory) => (
+                    <MemoryCard key={memory.id} memory={memory} />
+                  ))}
+                </div>
+              ) : (
+                <DataEmpty>
+                  Nothing kept yet. Capture the first small thing someone tells you.
                 </DataEmpty>
               )}
             </section>

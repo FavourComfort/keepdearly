@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { RequireAuth } from "@/components/auth/guards";
 import { AppShell } from "@/components/keepdearly/AppShell";
@@ -126,21 +126,32 @@ function Capture() {
   return (
     <RequireAuth>
       <AppShell>
-        <div className="flex flex-col gap-6 pt-8">
-          <header className="flex flex-col gap-1">
+        <div className="mx-auto flex w-full max-w-2xl flex-col gap-8 pt-8">
+          <header className="flex flex-col gap-1.5">
             <span className="text-label-sm uppercase tracking-widest text-outline">
               keep a memory
             </span>
             <h1 className="text-headline-lg text-on-surface">What&rsquo;s worth remembering?</h1>
-            <p className="text-body-md text-on-surface-variant">
-              Just as they said it. You can attach a person later, or never.
+            <p className="text-body-md italic text-on-surface-variant">
+              The little things are often the ones that matter.
             </p>
           </header>
 
           <MemoryInput value={text} onChange={setText} photo={photo} onPhotoChange={setPhoto} />
 
-          <section className="flex flex-col gap-3 rounded-xl bg-surface-container-lowest p-6 shadow-sm">
-            <h2 className="text-title-md text-on-surface">Who is this about?</h2>
+          <section className="flex flex-col gap-3">
+            <div className="flex items-baseline justify-between gap-3">
+              <h2 className="text-title-md text-on-surface">Who is this about?</h2>
+              {people.length > 5 ? (
+                <button
+                  type="button"
+                  onClick={() => setPicking(true)}
+                  className="shrink-0 text-label-md font-medium text-primary transition-colors hover:text-primary/80"
+                >
+                  See all →
+                </button>
+              ) : null}
+            </div>
             <p className="-mt-2 text-body-sm text-on-surface-variant">
               Optional — leave it as a personal note.
             </p>
@@ -183,18 +194,11 @@ function Capture() {
                   {person.name}
                 </button>
               ))}
-              {people.length > 5 ? (
-                <button
-                  type="button"
-                  onClick={() => setPicking(true)}
-                  className="flex items-center gap-1.5 rounded-full border border-outline-variant/50 px-3.5 py-1.5 text-label-md text-primary transition-all hover:bg-surface-container-low"
-                >
-                  See all ({people.length})
-                </button>
-              ) : null}
             </div>
-            <div className="mt-1 flex items-center gap-2 rounded-full bg-surface-container-low px-4 py-1.5">
-              <Icon name="person_add" className="text-[16px] text-outline" />
+            {/* Fast inline creation for this memory. The full profile with a
+                photo lives at People → Add, so this stays a quiet input. */}
+            <div className="mt-1 flex items-center gap-2.5 rounded-2xl border border-dashed border-outline-variant/60 px-4 py-2.5 transition-colors focus-within:border-primary/50 focus-within:bg-surface-container-lowest">
+              <Icon name="person_add" className="text-[18px] text-outline" />
               <input
                 value={newName}
                 onChange={(e) => {
@@ -202,16 +206,10 @@ function Capture() {
                   if (e.target.value) setPersonId(undefined);
                 }}
                 placeholder="or add someone new…"
+                aria-label="Add someone new"
                 className="w-full bg-transparent text-label-md text-on-surface outline-none placeholder:text-outline"
               />
             </div>
-            <Link
-              to="/people/new"
-              className="mt-1 w-fit text-label-sm text-primary hover:underline"
-              title="Add someone with a photo"
-            >
-              Add someone with a photo
-            </Link>
           </section>
 
           {/* The full people picker. A sheet, not a page, precisely so the
@@ -281,10 +279,10 @@ function Capture() {
             </SheetContent>
           </Sheet>
 
-          <section className="flex flex-col gap-2 rounded-xl bg-surface-container-lowest p-6 shadow-sm">
-            <h2 className="text-title-md text-on-surface">Nudge me about it</h2>
-            <p className="-mt-1 text-body-sm text-on-surface-variant">
-              A quiet reminder, only if you want one.
+          <section className="flex flex-col gap-2.5">
+            <h2 className="text-title-md text-on-surface">When should KeepDearly remind you?</h2>
+            <p className="-mt-1.5 text-body-sm italic text-on-surface-variant">
+              Only if you&rsquo;d like a little reminder later.
             </p>
             <ReminderSelector
               value={reminder}
@@ -313,16 +311,18 @@ function Capture() {
 
           {error ? <DataNotice tone="error">{error}</DataNotice> : null}
 
-          <div className="flex flex-wrap items-center justify-between gap-3 pb-4">
-            <span className="text-label-sm text-outline">Kept privately in your account.</span>
+          {/* The natural conclusion: one clear action, with the privacy note as
+              its quiet companion rather than fine print off to the side. */}
+          <div className="flex flex-col items-center gap-2.5 pb-6 pt-2">
             <PrimaryButton
               onClick={handleSave}
               disabled={!canSave}
-              className={cn(!canSave && "opacity-50")}
+              className={cn("w-full sm:w-auto sm:px-12", !canSave && "opacity-50")}
             >
               <Icon name="favorite" filled className="text-[18px]" />
-              {saving ? (photo ? "Uploading photo…" : "Keeping…") : "Keep it"}
+              {saving ? (photo ? "Uploading photo…" : "Keeping…") : "Keep this memory"}
             </PrimaryButton>
+            <span className="text-label-sm text-outline">Kept privately in your account.</span>
           </div>
         </div>
       </AppShell>
