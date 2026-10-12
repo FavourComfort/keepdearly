@@ -16,6 +16,11 @@ dist-ssr
 .nitro
 *.local
 
+# Vercel Build Output — a machine-specific build artifact. Committing it makes
+# Vercel deploy this prebuilt folder directly and SKIP `vite build`, so the
+# site ends up running a stale (often cross-OS) bundle instead of a fresh one.
+.vercel
+
 # Local environment files — never commit real credentials.
 # `.env.example` stays tracked so the expected variable names are documented.
 .env
