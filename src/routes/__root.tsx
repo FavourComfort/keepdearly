@@ -11,6 +11,7 @@ import {
 import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
+import iconUrl from "./design/icon.png";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AuthProvider } from "../lib/auth";
 import { KeepDearlyProvider } from "../lib/keepdearly-store";
@@ -90,23 +91,24 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "description", content: "The little things that actually matter." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      // iOS reads its own tags for an installed web app: a full-bleed
+      // standalone launch, the KeepDearly surface behind the status bar, and
+      // the lowercase wordmark as the Home Screen label. Chrome and Android
+      // ignore these, so nothing else changes.
+      { name: "mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "default" },
+      { name: "apple-mobile-web-app-title", content: "keepdearly" },
     ],
     links: [
       {
         rel: "stylesheet",
         href: appCss,
       },
-      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      { rel: "icon", href: iconUrl, type: "image/png" },
       // The Home Screen icon on iOS. Same approved mark, no new artwork.
-      { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
+      { rel: "apple-touch-icon", href: iconUrl },
       { rel: "manifest", href: "/site.webmanifest" },
-      // iOS reads its own tags for an installed web app: a full-bleed
-      // standalone launch, the KeepDearly surface behind the status bar, and
-      // the lowercase wordmark as the Home Screen label. Chrome and Android
-      // ignore these, so nothing else changes.
-      { rel: "apple-mobile-web-app-capable", href: "/site.webmanifest" },
-      { rel: "apple-mobile-web-app-status-bar-style", href: "default" },
-      { rel: "apple-mobile-web-app-title", href: "keepdearly" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {

@@ -59,6 +59,17 @@
   --color-on-error: oklch(1 0 0);
   --color-error-container: oklch(0.913 0.045 20.3);
 
+  /* Editorial landing palette, sampled to match the supplied visual reference. */
+  --color-landing-paper: #fff9f5;
+  --color-landing-ink: #1e2a14;
+  --color-landing-lilac: #bda4e4;
+  --color-landing-lilac-soft: #e7d9f6;
+  --color-landing-lilac-deep: #76539e;
+  --color-landing-peach: #ffc28d;
+  --color-landing-peach-soft: #ffe0cd;
+  --color-landing-peach-deep: #db7725;
+  --color-landing-sage-soft: #dce0b9;
+
   --font-display: "Newsreader", Georgia, serif;
   --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
 
@@ -203,6 +214,7 @@
        layout use the real screen edges, paired with viewport-fit=cover in the
        document head so the safe-area insets are non-zero. */
     height: 100%;
+    scroll-behavior: smooth;
   }
 
   body {
