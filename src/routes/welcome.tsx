@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 
 import { BrandMark } from "@/components/keepdearly/BrandMark";
 import { Icon } from "@/components/keepdearly/Icon";
-import warmMemoriesSceneUrl from "./design/warm memories scene.png";
+import warmMemoriesSceneUrl from "./design/Warm Memories Scene.png";
 
 /** The public, static landing page. The signed-in app remains at the root route. */
 export const Route = createFileRoute("/welcome")({
